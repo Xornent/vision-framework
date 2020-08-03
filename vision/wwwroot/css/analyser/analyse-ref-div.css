@@ -1,0 +1,41 @@
+﻿div .reflist {
+    font-size: 12px;
+    margin-bottom: 0.5em;
+}
+
+.ref-columns {
+    -webkit-column-width: 30em;
+    -moz-column-width: 30em;
+    column-width: 30em;
+    font-size: 12px;
+    line-height: 18px;
+}
+
+ol {
+    display: block;
+    list-style-type: decimal;
+    margin-block-start: 1em;
+    margin-block-end: 1em;
+    margin-inline-start: 0px;
+    margin-inline-end: 0px;
+    padding-inline-start: 40px;
+}
+
+div.reflist ol.references {
+    font-size: 100%;
+    margin-bottom: 0;
+    list-style-type: inherit;
+}
+
+ol.references, div.reflist {
+    font-size: 90%;
+    margin-bottom: 0.5em;
+}
+
+li {
+    word-wrap: break-word;
+}
+
+    li a, b, i, p {
+        word-wrap: break-word;
+    }

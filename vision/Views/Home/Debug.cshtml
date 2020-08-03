@@ -1,0 +1,68 @@
+﻿@model IEnumerable<Page>
+
+@{
+    ViewData["Title"] = "高级搜索";
+}
+
+<h1>@ViewData["Title"]</h1>
+<p>这里显示了所有（符合要求）的 Vision 页面和系统页面对象列表，指定下面的多项选择条件，可以搜索符合要求的结果。</p>
+<br />
+
+<form>
+    <table>
+        <thead>
+            <tr>
+                <th style="width:280px;">选项</th>
+
+                <th>值</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>
+                    <label class="control-label">页面标识条件</label>
+                </td>
+                <td>
+                    <div class="tagsinput-primary">
+                        <input name="tags" id="id-tags" class="tagsinput" data-role="tagsinput" value="" placeholder="输入后回车" />
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td><label class="control-label">页面标题名称</label></td>
+                <td><input value="所有命名空间" id="id-name" /></td>
+            </tr>
+            <tr>
+                <td><label class="control-label">命名空间</label></td>
+                <td><input value="所有命名空间" id="id-namespace" /></td>
+            </tr>
+            <tr>
+                <td><label class="control-label">启用/禁用模糊查询</label></td>
+                <td> <input type="checkbox" style="width:auto;height:auto" id="id-blurred" /></td>
+            </tr>
+            <tr>
+                <td><label class="control-label">启用/禁用文本的正则表达式搜索</label></td>
+                <td> <input type="checkbox" style="width:auto;height:auto" id="id-regexp" /></td>
+            </tr>
+            <tr>
+                <td><label class="control-label">领域</label></td>
+                <td>
+                    <select>
+                        <option>所有领域</option>
+                    </select>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</form>
+<br/>
+<hr/>
+
+
+@foreach(var item in Model) {
+    <div>
+        <h4>Id: <code>@item.Id</code> | Page: <a href="~/Home/Page/@item.Title.Replace(" ","%20")">@item.Title</a></h4>
+    </div>
+}
+
+<div class="placeholder"></div>

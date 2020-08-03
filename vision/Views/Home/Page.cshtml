@@ -1,0 +1,10 @@
+﻿@model (Page _Page, Record _Record)
+@{
+    ViewData["Title"] = Model._Page.Title.Split('#')[0] ;
+}
+
+<h1>@Model._Page.Title</h1>
+
+@(new Microsoft.AspNetCore.Html.HtmlString(ViewBag.HtmlPage))
+
+<div class="placeholder"><p>&nbsp;</p></div>

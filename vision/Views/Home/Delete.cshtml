@@ -1,0 +1,18 @@
+﻿@model Vision.Models.Page   
+
+@{
+    ViewData["Title"] = "删除条目";
+}
+
+<h1>删除条目</h1>
+
+<h2>你确定要删除条目 @Html.Raw(Model.Title) 吗？</h2>
+
+<div>
+    <form asp-action="Delete">
+        <input type="hidden" asp-for="Id" />
+        <input type="submit" value="    删除    " class="btn btn-danger" />
+
+        <a asp-action="Index">返回主页</a>
+    </form>
+</div>

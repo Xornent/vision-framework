@@ -1,0 +1,41 @@
+﻿@model Vision.Models.Page
+
+@{
+    ViewData["Title"] = "新建词条";
+}
+
+<h1>新建条目</h1>
+
+<hr />
+
+<div class="row" style="margin-top:40px">
+    <div class="col-md-4">
+        <form asp-action="Create">
+            <div asp-validation-summary="ModelOnly" class="text-danger" style="display:none"></div>
+            <div class="form-group">
+                <label asp-for="Title" class="control-label"></label>
+                <input asp-for="Title" id="title" class="form-control" />
+                <span asp-validation-for="Title" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <input type="submit" value="    创建词条    " class="btn btn-primary" />
+            </div>
+        </form>
+    </div>
+</div>
+
+<div>
+    <a asp-action="Index">回到首页</a>
+</div>
+
+<script>
+    function add_namespace() {
+        var in_title = document.getElementById("title");
+        var in_select = document.getElementById("select-ns");
+        in_title.value = in_select.value + ":::" + in_title.value;
+        return true;
+    }
+</script>
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

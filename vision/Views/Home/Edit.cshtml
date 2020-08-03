@@ -1,0 +1,165 @@
+﻿@model (Page _Page, Record _Record)
+@{
+    ViewData["Title"] = "编辑";
+}
+
+<h1>编辑： @Html.Raw(Model._Page.Title.Split('#')[0])</h1>
+<div id="monaco-div" style="width: 100%;height: 450px; margin-top: 15px; margin-bottom:15px">
+</div>
+
+<form asp-action="Edit">
+    <input style="display:none" name="id" id="id-id" value="@Model._Page.Id" />
+    <input style="display:none" name="tags" id="id-tags" value="@Model._Record.Category" />
+    <textarea style="display:none" name="history" id="id-hist">@Model._Record.Body</textarea>
+    <p><b>此页面的标识：</b><br /></p>
+    <div class="tagsinput-primary">
+        <input name="tagsinput" id="tagsinputval" class="tagsinput" data-role="tagsinput" value="" placeholder="输入后回车" />
+    </div>
+
+    <input type="submit" value="提交对文档的更改" style="width:180px; height:30px; margin-top:20px;" onclick="return loadup()" />
+</form>
+
+<script src="~/editor/min/vs/loader.js"></script>
+<script>
+
+    var meditor = null;
+
+    // Language Services
+    require.config({ paths: { 'vs': '../../editor/min/vs' } });
+    require(['vs/editor/editor.main'], function () {
+
+        // Register a new language
+        monaco.languages.register({ id: 'vmkup' });
+
+        // Register a tokens provider for the language
+        monaco.languages.setMonarchTokensProvider('vmkup', {
+            tokenizer: {
+                root: [
+                    [/\([^)]*\:/gm, "cmd"],
+                    [/=====[^)]*=====/gm, "h5"],
+                    [/====[^)]*====/gm, "h4"],
+                    [/===[^)]*===/gm, "h3"],
+                    [/==[^)]*==/gm, "h2"],
+                    [/\{\{\{[^)]*\}\}\}/gm, "template"],
+                    [/\{\{[^)]*\}\}/gm, "reference"],
+                    [/\[\[[^)]*\]\]/gm, "link"],
+                    [/\[\[\[[^)]*\]\]\]/gm, "weblink"],
+                    [/\{\[[^)]*\]\}/gm, "table"],
+                    [/\<\<\<[^)]*\>\>\>/gm, "gallery"],
+                    [/\<\:[^)]*\:\>/gm, "tag"],
+                    [/;;;;;;/gm, "showref"]
+                ]
+            }
+        });
+
+        // Define a new theme that contains only rules that match this language
+        monaco.editor.defineTheme('vmkupTheme', {
+            base: 'vs',
+            inherit: false,
+            rules: [
+                { token: 'h2', foreground: '993333' },
+                { token: 'h3', foreground: '993366' },
+                { token: 'h4', foreground: '993399' },
+                { token: 'h5', foreground: '9933cc' },
+                { token: 'cmd', foreground: '9933ff' },
+                { token: 'reference', foreground: '006600' },
+                { token: 'template', foreground: 'ff00cc' },
+                { token: 'weblink', foreground: '0033ff' },
+                { token: 'link', foreground: '0033ff' },
+                { token: 'table', foreground: '0033ff' },
+                { token: 'image', foreground: 'ff6600' },
+                { token: 'gallery', foreground: '006666' },
+                { token: 'tag', foreground: 'cc6600' },
+                { token: 'showref', foreground: '990033' }
+            ]
+        });
+
+        // Register a completion item provider for the new language
+        monaco.languages.registerCompletionItemProvider('vmkup', {
+            provideCompletionItems: () => {
+                var suggestions = [{
+                    label: 'p',
+                    kind: monaco.languages.CompletionItemKind.Snippet,
+                    insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+                    insertText: '::${1:Paragraph}::'
+                }, {
+                    label: 'para',
+                    kind: monaco.languages.CompletionItemKind.Snippet,
+                    insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+                    insertText: '::${1:Paragraph}::'
+                }, {
+                    label: 'link',
+                    kind: monaco.languages.CompletionItemKind.Snippet,
+                    insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+                    insertText: '[[${1:Link}|${2:Display}]]'
+                }, {
+                    label: 'weblink',
+                    kind: monaco.languages.CompletionItemKind.Snippet,
+                    insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+                    insertText: '[[[${1:Link}|${2:Display}]]]'
+                }, {
+                    label: 'h2',
+                    kind: monaco.languages.CompletionItemKind.Snippet,
+                    insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+                    insertText: '==${1:Title}=='
+                }, {
+                    label: 'h3',
+                    kind: monaco.languages.CompletionItemKind.Snippet,
+                    insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+                    insertText: '===${1:Title}==='
+                }, {
+                    label: 'h4',
+                    kind: monaco.languages.CompletionItemKind.Snippet,
+                    insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+                    insertText: '====${1:Title}===='
+                }, {
+                    label: 'h5',
+                    kind: monaco.languages.CompletionItemKind.Snippet,
+                    insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+                    insertText: '=====${1:Title}====='
+                }, {
+                    label: 'h6',
+                    kind: monaco.languages.CompletionItemKind.Snippet,
+                    insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+                    insertText: '======${1:Title}======'
+                }
+                ];
+                return { suggestions: suggestions };
+            }
+        });
+
+        // import * as monaco from '../editor/esm/vs/editor/editor.api.js';
+        meditor = monaco.editor.create(document.getElementById("monaco-div"), {
+            value: "@Html.Raw(Model._Record.Body.Replace("\r", @"\r").Replace("\t", @"\t").Replace("\n", @"\n")) ",
+            language: "vmkup",
+
+            lineNumbers: "on",
+            roundedSelection: false,
+            scrollBeyondLastLine: true,
+            readOnly: false,
+            theme: "vmkupTheme",
+        });
+    });
+
+        var initialized = false;
+
+    function loadup() {
+        try {
+            var ibd = document.getElementById("id-hist");
+            var str = meditor.getValue();
+            ibd.value = str;
+
+            var itg = document.getElementById("id-tags");
+            var tgs = $("#tagsinputval").val();
+            itg.value = tgs;
+
+            if (!initialized) {
+                $("#tagsinputval").tagsinput("add", "@Html.Raw(Model._Record.Category)");
+                initialized = true;
+            }
+            return true;
+        } catch (ex) { return false; }
+    }
+
+    setTimeout(loadup, 800);
+</script>
