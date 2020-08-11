@@ -1,0 +1,21 @@
+﻿@{
+    ViewData["Title"] = "登入";
+}
+
+<h1>登入</h1>
+
+<form asp-action="Login">
+    <table>
+        <tbody>
+            <tr>
+                <td><label class="control-label">用户名</label></td>
+                <td><input value="" name="username" placeholder="注册用户名" /></td>
+            </tr>
+            <tr>
+                <td><label class="control-label">密码</label></td>
+                <td><input value="" name="password" placeholder="输入大小写敏感的密码" /></td>
+            </tr>
+        </tbody>
+    </table>
+    <input type="submit" value="    登入    " />
+</form>

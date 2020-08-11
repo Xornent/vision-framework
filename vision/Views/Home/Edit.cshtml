@@ -15,6 +15,8 @@
     <div class="tagsinput-primary">
         <input name="tagsinput" id="tagsinputval" class="tagsinput" data-role="tagsinput" value="" placeholder="输入后回车" />
     </div>
+    <p><b>编辑和更改摘要：</b><br></p>
+    <div class="form-group"><textarea style="margin: 0px 12px; height: 80px;" name="summary" id="id-summary" placeholder="用简短的几句话概括本次编辑的主要内容，填写编辑摘要（可选的）" class="form-control"></textarea></div>
 
     <input type="submit" value="提交对文档的更改" style="width:180px; height:30px; margin-top:20px;" onclick="return loadup()" />
 </form>
@@ -130,7 +132,7 @@
 
         // import * as monaco from '../editor/esm/vs/editor/editor.api.js';
         meditor = monaco.editor.create(document.getElementById("monaco-div"), {
-            value: "@Html.Raw(Model._Record.Body.Replace("\r", @"\r").Replace("\t", @"\t").Replace("\n", @"\n")) ",
+            value: "@Html.Raw(Model._Record.Body.Replace("\r", @"\r").Replace("\t", @"\t").Replace("\n", @"\n").Replace("\"",@"\"+"\""))",
             language: "vmkup",
 
             lineNumbers: "on",

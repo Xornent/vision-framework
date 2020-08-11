@@ -374,6 +374,7 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Routing;
 using Microsoft.Extensions.Hosting.Internal;
+using Microsoft.Extensions.Localization.Internal;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -384,6 +385,7 @@ using System.Threading.Tasks;
 using System.Web;
 using Vision.Data;
 using Vision.Markup.Ast;
+using Vision.Markup.Categories;
 using Vision.Models;
 
 namespace Vision.Markup {
@@ -393,23 +395,53 @@ namespace Vision.Markup {
 
         }
 
-        public string FromSource(string markup, Page page, Record record, User user, string ns, PageContext ctxpage, UserContext ctxuser) {
-            MarkupDocument doc = Parse(markup.Replace("`(", "${br-left}").Replace("`)","${br-right}"));
+        public (string Page, MarkupDocument Document) FromSource(string markup, Page page, Record record, User user, string ns, PageContext ctxpage, UserContext ctxuser) {
+
+            // 使用 <novml> ... </novml> 可以使部分内容直接以原文显示，
+            // 这不同于一般的 HTML 标签。
+            string pattern = @"<novml>(.*?)</novml>";
+            markup = markup.Replace("\n", "$${break-n}");
+            Dictionary<Guid, string> replacer = new Dictionary<Guid, string>();
+            while (Regex.IsMatch(markup, pattern)) {
+                markup = Regex.Replace(markup, pattern, (match) => {
+                    Guid guid = Guid.NewGuid();
+                    replacer.Add(guid, match.Value.Remove(0,7).Remove(match.Value.Length - 15,8));
+                    return "$$:::" + guid.ToString().ToUpper() + ":::";
+                });
+            }
+            markup = markup.Replace("$${break-n}", "\n");
+            MarkupDocument doc = Parse(markup.Replace("`(", "$${br-left}").Replace("`)","$${br-right}"));
             doc.Execute(page, record, user, ns, ctxpage, ctxuser);
-            return doc.ToString().Replace("${br-left}","(").Replace("${br-right}",")");
+            string s = doc.ToString().Replace("$${br-left}","(").Replace("$${br-right}",")");
+            foreach (var item in replacer) {
+                s = s.Replace("$$:::" + item.Key.ToString().ToUpper() + ":::", item.Value.Replace("$${break-n}", "\n"));
+            }
+
+            return (s, doc);
         }
 
         public MarkupDocument Parse(string markup) {
-            markup = ParseAbbrevation(markup);
-
             MarkupDocument doc = new MarkupDocument();
+            int major = 0;
+            int minor = 0;
+            int small = 0;
+            markup = ParseAbbrevation(markup, doc);
             if (!markup.EndsWith('\n')) markup = markup + "\n";
             int bracket = 0;
-            string[] lines = markup.Split('\n');
+            List<string> lines = markup.Split('\n').ToList();
             bool enabled = true;
 
+            bool listmode = false;
+            ListItem list = new ListItem();
+            var appendee = list;
+            int lastlevel = 1;
+            bool skipped = false;
+
+            bool codemode = false;
+
+            int count = lines.Count;
             string raw = "";
-            for(int i = 0; i < lines.Count(); i++) {
+            for(int i = 0; i < count; i++) {
                 string line = lines[i].Replace("\t", "").Replace("\r", "");
                 int col = 1;
                 string trimmed = line.Trim();
@@ -420,15 +452,18 @@ namespace Vision.Markup {
 
                 if (bracket == 0) {
                     if (lowered.StartsWith("######") && enabled) {
-                        doc.Children.Add(new HeadlineSection(6, trimmed.Remove(0, 6).Trim())); continue;
+                        doc.Children.Add(new HeadlineSection(6, trimmed.Remove(0, 6).Trim(),"")); continue;
                     } else if (lowered.StartsWith("#####") && enabled) {
-                        doc.Children.Add(new HeadlineSection(5, trimmed.Remove(0, 5).Trim())); continue;
+                        doc.Children.Add(new HeadlineSection(5, trimmed.Remove(0, 5).Trim(),"")); continue;
                     } else if (lowered.StartsWith("####") && enabled) {
-                        doc.Children.Add(new HeadlineSection(4, trimmed.Remove(0, 4).Trim())); continue;
+                        small++;
+                        doc.Children.Add(new HeadlineSection(4, trimmed.Remove(0, 4).Trim(),major+"_"+minor+"_"+small)); continue;
                     } else if (lowered.StartsWith("###") && enabled) {
-                        doc.Children.Add(new HeadlineSection(3, trimmed.Remove(0, 3).Trim())); continue;
+                        minor++; small = 0;
+                        doc.Children.Add(new HeadlineSection(3, trimmed.Remove(0, 3).Trim(), major +"_"+minor)); continue;
                     } else if (lowered.StartsWith("##") && enabled) {
-                        doc.Children.Add(new HeadlineSection(2, trimmed.Remove(0, 2).Trim())); continue;
+                        major++; minor = 0; small = 0;
+                        doc.Children.Add(new HeadlineSection(2, trimmed.Remove(0, 2).Trim(), major.ToString())); continue;
                     } else if(lowered.StartsWith("#")) {
 
                         // 注意：只有一个 # 开头的时预编译指令
@@ -446,6 +481,65 @@ namespace Vision.Markup {
                                 break;
                             default:
                                 break;
+                        }
+                        continue;
+                    } else if(lowered.StartsWith("```")) {
+                        if (listmode) { 
+                            listmode = false;
+                            doc.Children.Add(new TextData(list.ToString()));
+                            list = new ListItem();
+                            appendee = list;
+                            lastlevel = 1;
+                            skipped = false;
+                        }
+                        else if (!listmode) {
+                            if (lowered.Replace("```", "").Trim() == "list") listmode = true;
+                        }
+                        continue;
+                    }
+
+                    if (listmode) {
+                        string tag = lowered.Split(' ')[0];
+                        string contentlist = trimmed.Replace(tag, "").Trim();
+                        if ((lowered.StartsWith(":") || lowered.StartsWith("*"))) {
+                            int level = tag.Count();
+                            if (level - lastlevel > 1 ) {
+                                skipped = true;
+                            } else skipped = false;
+
+                            if (!skipped) {
+                                char currenttag = tag.Last();
+                                if (level > lastlevel) {
+                                    appendee = appendee.Children.Last();
+                                    lastlevel++;
+                                } else if (level == lastlevel) {
+
+                                } else if (level < lastlevel) {
+                                    while (level < lastlevel) {
+                                        appendee = appendee.Parent;
+                                        lastlevel--;
+                                    }
+                                }
+
+                                if (currenttag == '*')
+                                    appendee.Children.Add(new ListItem()
+                                    {
+                                        Content = new List<Section>() { new TextData(contentlist) },
+                                        Numbered = false,
+                                        Parent = appendee
+                                    });
+                                else if (currenttag == ':')
+                                    appendee.Children.Add(new ListItem()
+                                    {
+                                        Content = new List<Section>() { new TextData(contentlist) },
+                                        Numbered = true,
+                                        Parent = appendee
+                                    });
+                            }
+                        } else {
+                            if (!skipped) {
+                                appendee.Children.Last().Content.Add(new TextData(contentlist));
+                            }
                         }
                         continue;
                     }
@@ -481,7 +575,7 @@ namespace Vision.Markup {
             return doc;
         }
 
-        public string ParseAbbrevation(string markup) {
+        public string ParseAbbrevation(string markup, MarkupDocument doc) {
 
             // Abbrevation 是 VML 支持的行内非模板缩略语法
 
@@ -551,7 +645,7 @@ namespace Vision.Markup {
                         if (isinside) return "(link: (redirect: " + vals[0] + ") (display: " + display + "))";
                         else return "(externallink: (redirect: " + vals[0] + ") (display: " + display + "))";
                     } else {
-                        return "(link: (redirect: ~/home/page/" + HttpUtility.UrlEncode(vals[0].Trim(), Encoding.UTF8).Replace("+", "%20") + ") (display: " + display + "))";
+                        return "(link: (redirect:" + HttpUtility.UrlEncode(vals[0].Trim(), Encoding.UTF8).Replace("+", "%20") + ") (display: " + display + "))";
                     }
                 }
             });
@@ -586,7 +680,7 @@ namespace Vision.Markup {
                     alts = alts + " (" + prop[1].Trim() + ")";
                 }
                 return "(gallery: (redirect: (" + redir + ")) (alt: (" + alts + ")) (message: " + msg + ") (oriention: " + orient + ") " + size + " )";
-            });
+            }, RegexOptions.IgnoreCase | RegexOptions.Multiline);
 
             // 引文：     语法： %%quote%%
             //                   (quote: (content: ...))
@@ -594,7 +688,7 @@ namespace Vision.Markup {
             markup = Regex.Replace(markup, @"%%(.*?)%%", (match) => {
                 string val = match.Value.Remove(0, 2).Remove(match.Value.Length - 4, 2);
                 return "(quote: (content: " + val + "))";
-            });
+            }, RegexOptions.IgnoreCase | RegexOptions.Multiline);
 
             // 代码：     语法： ^^code^^
             //                   (code: (content: ...))
@@ -602,19 +696,26 @@ namespace Vision.Markup {
             markup = Regex.Replace(markup, @"\^\^(.*?)\^\^", (match) => {
                 string val = match.Value.Remove(0, 2).Remove(match.Value.Length - 4, 2);
                 return "(code: (content: " + val + "))";
-            });
+            }, RegexOptions.IgnoreCase | RegexOptions.Multiline);
 
             // 引用：     语法： {{{id}}}
             //                   {{{id|message}}}
             //                   (reference: (id: ...) (message: ...))
 
             markup = Regex.Replace(markup, @"{{{(.*?)}}}", (match) => {
-                string val = match.Value.Remove(0, 3).Remove(match.Value.Length - 6, 2);
+                string val = match.Value.Remove(0, 3).Remove(match.Value.Length - 6, 3);
+                string mark = "";
+                string msg = "";
                 if (val.Contains("|")) {
                     string[] param = val.Split('|');
+                   
+                    SetDictionary(doc.References, param[0].Trim(), param[1].Trim());
                     return "(reference: (id: " + param[0].Trim() + ") (message: " + param[1].Trim() + "))";
-                } else return "(reference: (id: " + val.Trim() + ") (message: ))";
-            });
+                } else {
+                    SetDictionary(doc.References, val.Trim(), "");
+                    return "(reference: (id: " + val.Trim() + ") (message: ))";
+                }
+            }, RegexOptions.IgnoreCase | RegexOptions.Multiline);
 
             // 脚注：     语法： {{id}}
             //                   {{id|message}}
@@ -624,9 +725,14 @@ namespace Vision.Markup {
                 string val = match.Value.Remove(0, 2).Remove(match.Value.Length - 4, 2);
                 if (val.Contains("|")) {
                     string[] param = val.Split('|');
-                    return "(footnote: (id: " + param[0].Trim() + ") (message: " + param[1].Trim() + "))";
-                } else return "(footnote: (id: " + val.Trim() + ") (message: ))";
-            });
+                    string disp = ToRomanLower(int.Parse(param[0].Trim()));
+                    SetDictionary(doc.Footnotes, param[0].Trim(), param[1].Trim());
+                    return "(footnote: (id: " + disp + ") (message: " + param[1].Trim() + "))";
+                } else {
+                    SetDictionary(doc.Footnotes, val.Trim(), "");
+                    return "(footnote: (id: " + ToRomanLower(int.Parse(val.Trim())) + ") (message: ))";
+                }
+            }, RegexOptions.IgnoreCase | RegexOptions.Multiline);
 
             // 值得注意的是，由于列表在其他语法中的简化与 VML 标准语法的复杂度之间差异不大，在许多情况下甚至 VML 更简单
             // 我们不对表格进行特殊语法规定，而统一使用标准 VML 数组嵌套数组来表示二维表格：
@@ -642,6 +748,31 @@ namespace Vision.Markup {
             // 其中 #3,2 意味着本单元格横向吞并 3 格，纵向吞并 2 格
 
             return markup;
+        }
+
+        public static string ToRomanLower(int num) {
+            string[,] mapping = new string[4, 10] {
+                {"", "I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX"},
+                {"", "X", "XX", "XXX", "XL", "L", "LX", "LXX", "LXXX", "XC"},
+                {"", "C", "CC", "CCC", "CD", "D", "DC", "DCC", "DCCC", "CM"},
+                 {"", "M", "MM", "MMM", ""  , "",  ""  , ""   , ""    , "" }
+            };
+
+            return (mapping[3, num / 1000 % 10]  
+                    + mapping[2, num / 100 % 10]
+                    + mapping[1, num / 10 % 10] 
+                    + mapping[0, num % 10]).ToLower();
+        }
+
+        public void SetDictionary(Dictionary<string, string> dict, string key, string value) {
+            if (dict.ContainsKey(key)) {
+                int i = 1;
+                while(dict.ContainsKey(key+"_"+i)) {
+                    i++;
+                }
+                dict.Add(key + "_" + i, value);
+            }
+            else dict.Add(key, value);
         }
     }
 }

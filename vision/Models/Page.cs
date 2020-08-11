@@ -5,6 +5,8 @@ using System.Threading.Tasks;
 
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 
 namespace Vision.Models {
 
@@ -27,25 +29,22 @@ namespace Vision.Models {
         public int Id { get; set; }
 
         /// <summary>
-        /// 包含命名空间名和页面标题的标题限定字符串。
-        /// 
-        /// 如果本页面没有命名空间，格式为 '@Title'，若有命名空间，为 'Namespace@Title'
-        /// 字符串的总长不超过 50 个字符。
-        /// 
-        /// 用户在 Views/Create 中输入创建页面时，命名空间和标题分属于两个不同的文本框，在
-        /// 提交表单时使用页面内客户端脚本将两字段合并传入标题文本框中。 在 Views/Page，和
-        /// 超链接等内容的显示时，用户应该看到的完整标题是 'Namespace：Title' 即将 '@' 字符
-        /// 替换成 <b>中文冒号</b>。
-        /// 
-        /// 参见 <see cref="Controllers.HomeController.Create(Page)"/> 实现
+        /// 页面标题的标题限定字符串。
         /// </summary>
         [MaxLength(50)]
         public string Title { get; set; }
+
+        [MaxLength(50)]
+        public string Namespace { get; set; }
 
         /// <summary>
         /// 参见 <see cref="ProtectiveLevel"/>
         /// </summary>
         public int Level { get; set; }
+
+        [BindNever]
+        [NotMapped]
+        public List<string> Models { get; set; } = new List<string>();
     }
 
     /// <summary>

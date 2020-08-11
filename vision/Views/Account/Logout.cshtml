@@ -1,0 +1,11 @@
+﻿@{
+    ViewData["Title"] = "登出";
+}
+
+<h1>登出当前用户</h1>
+<h3>你确定要退出当前用户吗</h3>
+<h4><code>@ViewData["Authenticated"]</code></h4>
+
+<form asp-action="Logout">
+    <input type="submit"/>
+</form>

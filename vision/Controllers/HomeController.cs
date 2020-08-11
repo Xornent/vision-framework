@@ -12,6 +12,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Vision.Data;
 using Vision.Difference.Builder;
+using Vision.Markup;
 using Vision.Models;
 
 namespace Vision.Controllers {
@@ -52,6 +53,9 @@ namespace Vision.Controllers {
         private readonly CategoryContext _ctx_categories;
         private readonly UserContext _ctx_users;
 
+        private readonly string CurrentUserName = "";
+        private bool IsUser = false;
+
         private readonly Markup.MarkupParser MarkupParser = new Markup.MarkupParser();
         private readonly Difference.DifferParser DifferParser = new Difference.DifferParser();
 
@@ -70,6 +74,10 @@ namespace Vision.Controllers {
             ViewData["IsPage"] = false;
             ViewData["PageId"] = 0;
             ViewData["PageTitle"] = "";
+
+            ViewData["AuthenticatedUser"] = false;
+            ViewData["AuthenticatedAdministrator"] = false;
+            ViewData["AuthenticatedUserName"] = "";
         }
 
         #region Index
@@ -109,16 +117,22 @@ namespace Vision.Controllers {
             //       版本的界面内容。 如果一定不想在当时生成，可以将 Record.Bosy 设成空，或空格字符
             //       以强制执行此方法。
 
-            if (!string.IsNullOrWhiteSpace(pageItem.Record.Body))
-                ViewBag.HtmlPage = MarkupParser.FromSource(pageItem.Record.Body, pageItem.Result, pageItem.Record,
+            if (!string.IsNullOrWhiteSpace(pageItem.Record.Body)) {
+                (string p, MarkupDocument doc) res = MarkupParser.FromSource(pageItem.Record.Body, pageItem.Result, pageItem.Record,
                     null, ViewBag.Namespace, _ctx_pages, _ctx_users);
-            else {
+                ViewBag.HtmlPage = res.p;
+                pageItem.Result.Models = res.doc.StringifyModels;
+            } else {
                 pageItem.Record.Body = DifferParser.Build(pageItem.Record.History, pageItem.Record.Use);
                 _ctx_records.Update(pageItem.Record);
                 await _ctx_records.SaveChangesAsync();
-                ViewBag.HtmlPage = MarkupParser.FromSource(pageItem.Record.Body, pageItem.Result, pageItem.Record,
+                (string p, MarkupDocument doc) res = MarkupParser.FromSource(pageItem.Record.Body, pageItem.Result, pageItem.Record,
                     null, ViewBag.Namespace, _ctx_pages, _ctx_users);
+                pageItem.Result.Models = res.doc.StringifyModels;
+                ViewBag.HtmlPage = res.p;
             }
+
+            pageItem.Record.Changes = DifferParser.GetChanges(pageItem.Record.History);
 
             ViewData["IsPage"] = true;
             ViewData["PageId"] = pageItem.Result.Id;
@@ -176,6 +190,8 @@ namespace Vision.Controllers {
                 Id = Convert.ToInt32(formData["id"]),
                 Tag = formData["tags"]
             };
+            string summary = formData["summary"];
+            summary = summary.Replace(" ", "&nbsp;").Replace("\n", "<br/>");
             if (id != fdata.Id) return ManagedPageNotFoundError(id);
 
             var pageItem = Utilities.Query.GetPageAndRecordById(_ctx_pages, _ctx_records, id);
@@ -186,10 +202,13 @@ namespace Vision.Controllers {
 
             string diff = DifferParser.Generate(pageItem.Record.Body, fdata.History);
             int v = DifferParser.GetVersion(pageItem.Record.History) + 1;
+
+            string user = (string)ViewData["AuthenticatedUserName"];
+            if (string.IsNullOrWhiteSpace(user)) user = Request.HttpContext.Connection.LocalIpAddress.MapToIPv4().ToString();
             string addHist = "\n:" + v + "\n" +
-                "@user " + ViewBag.User + "\n" +
+                "@user " + user + "\n" +
                 "@datetime " + DateTime.Now.ToString() + "\n" +
-                "@summary " + "\n" +
+                "@summary " + summary + "\n" +
                 diff;
 
             pageItem.Record.History = pageItem.Record.History + addHist;
@@ -204,7 +223,7 @@ namespace Vision.Controllers {
                     await _ctx_records.SaveChangesAsync();
                 } catch { }
             }
-            return Redirect("../Page/" + HttpUtility.UrlEncode(pageItem.Result.Title, Encoding.UTF8).Replace("+","%20"));
+            return Redirect("../Page/" + pageItem.Result.Namespace +":" + HttpUtility.UrlEncode(pageItem.Result.Title, Encoding.UTF8).Replace("+","%20"));
         }
         #endregion
 
@@ -220,12 +239,16 @@ namespace Vision.Controllers {
         [HttpPost]
         [ValidateAntiForgeryToken]
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
-        public async Task<IActionResult> Create([Bind("Hash,Id,Title,Level")] Page page) {
+        public async Task<IActionResult> Create([Bind("Hash,Id,Title,Namespace,Level")] Page page) {
+
+            if (page.Namespace == "系统") page.Namespace = "System";
+            if (page.Namespace == "特殊") page.Namespace = "Special";
+            if (page.Namespace == "不可见") page.Namespace = "Invisible";
 
             // 从输入的 Form Data 中获取文件名（和命名空间名）
             // 这两个名称是直接存储在 Page.Title 中的。（详见文档注释说明）
 
-            page.Hash = Cryptography.MD5.Encrypt(page.Title);
+            page.Hash = Cryptography.MD5.Encrypt(page.Namespace + ":" + page.Title);
             page.Level = 0;
 
             // 查找标题是否与已有的重复
@@ -261,15 +284,16 @@ namespace Vision.Controllers {
             // 现在，我们为每个界面创建它所有的 Talk 界面，如果标题中前导 Talk:
             // 我们会报错，因为用户不能创建命名空间的界面
 
-            if (page.Title.StartsWith("Talk:")) {
+            if (page.Title.ToLower().StartsWith("talk:")) {
                 return IllegalNamespaceError(page.Title);
             }
 
             Models.Page pageTalk = new Page()
             {
-                Title = "Talk: " + page.Title,
+                Title = page.Title,
                 Level = 0,
-                Hash = Cryptography.MD5.Encrypt("Talk: " + page.Title)
+                Namespace = "Talk",
+                Hash = Cryptography.MD5.Encrypt("Talk:" + page.Title)
             };
 
             Record recordTalk = new Record()
@@ -315,10 +339,33 @@ namespace Vision.Controllers {
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
         public async Task<IActionResult> DeleteConfirmed(int id) {
             var pageItem = Utilities.Query.GetPageAndRecordById(_ctx_pages, _ctx_records, id);
-            _ctx_pages.Page.Remove(pageItem.Result);
-            _ctx_records.Record.Remove(pageItem.Record);
-            await _ctx_records.SaveChangesAsync();
-            await _ctx_pages.SaveChangesAsync();
+            pageItem.Result.Namespace = "Deleted";
+            var talkPage = Utilities.Query.GetPageAndRecordByMd5(_ctx_pages, _ctx_records, Cryptography.MD5.Encrypt("Talk:" + pageItem.Result.Title));
+            talkPage.Result.Namespace = "DeletedTalk";
+
+            int v = DifferParser.GetVersion(pageItem.Record.History) + 1;
+
+            string user = (string)ViewData["AuthenticatedUserName"];
+            if (string.IsNullOrWhiteSpace(user)) user = Request.HttpContext.Connection.LocalIpAddress.MapToIPv4().ToString();
+            string addHist = "\n:" + v + "\n" +
+                "@user " + user + "\n" +
+                "@datetime " + DateTime.Now.ToString() + "\n" +
+                "@summary " + "删除了界面" +
+                "@delete";
+            pageItem.Record.History = pageItem.Record.History + addHist;
+
+            v = DifferParser.GetVersion(talkPage.Record.History) + 1;
+            string addHist2 = "\n:" + v + "\n" +
+                "@user " + user + "\n" +
+                "@datetime " + DateTime.Now.ToString() + "\n" +
+                "@summary " + "删除了当前界面的讨论界面"+
+                "@delete";
+            talkPage.Record.History = talkPage.Record.History + addHist2;
+
+            _ctx_pages.Update(pageItem.Result);
+            _ctx_pages.Update(talkPage.Result);
+            _ctx_records.Update(pageItem.Record);
+            _ctx_records.Update(talkPage.Record);
             return RedirectToAction(nameof(Index));
         }
         #endregion

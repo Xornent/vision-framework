@@ -95,7 +95,8 @@ namespace Vision.Markup.Ast {
                         case DataSectionType.Text: return (me.Value[id.Value][0] as TextData);
                     }
                     return new TextData("");
-                } else return new TextData("");
+                } else
+                    return new TextData(me.Value[id.Value][0].Raw);
             } else {
                 ArrayData arr = new ArrayData();
                 string content = "";

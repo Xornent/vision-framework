@@ -4,6 +4,7 @@ using System.Linq;
 using System.Security.Cryptography;
 using System.Threading.Tasks;
 using Vision.Difference.Builder;
+using Vision.Models;
 
 namespace Vision.Difference {
 
@@ -94,6 +95,66 @@ namespace Vision.Difference {
                 }
             }
             return version;
+        }
+
+        public List<Change> GetChanges(string diff) {
+            string[] lines = diff.Split('\n');
+            int version = 0;
+            bool logged = true;
+            Change c = new Change();
+            List<Change> result = new List<Change>();
+            bool startread = false;
+            for (int i = 0; i < lines.Count(); i++) {
+                string current = lines[i];
+
+                // 标记版本列由 : 开头
+                if (current.StartsWith(":")) {
+                    if (!logged) {
+                        c.Version = version;
+                        result.Add(c);
+                        c = new Change();
+                    }
+                    logged = true;
+                    int ver = 0;
+                    bool success = int.TryParse(current.Remove(0, 1).Trim(), out ver);
+                    if (success) {
+                        version = ver;
+                        startread = true;
+                        continue;
+                    }
+                }
+
+                if(startread) {
+                    if(current.StartsWith("@")) {
+                        logged = false;
+                        string[] secs = current.Split(' ');
+                        string tag = secs[0].Replace("@", "").Trim();
+                        switch (tag) {
+                            case "user":
+                                c.User = secs[1].Trim();
+                                break;
+                            case "datetime":
+                                c.Post = DateTime.Parse(current.Replace("@datetime","").Trim());
+                                break;
+                            case "summary":
+                                c.Summary = secs[1].Trim();
+                                break;
+                            case "delete":
+                                c.Type = (int)ChangeTag.Delete;
+                                break;
+                            case "publish":
+                                c.Type = (int)ChangeTag.Republish;
+                                break;
+                            default:
+                                break;
+                        }
+                    } else {
+                        startread = false;
+                    }
+                }
+            }
+            result.Add(c);
+            return result;
         }
 
         public string Generate(string src, string dest) {

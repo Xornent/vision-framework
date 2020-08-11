@@ -12,6 +12,10 @@ using Microsoft.EntityFrameworkCore;
 using Vision.Data;
 using Vision.Models;
 using System.Diagnostics;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Http;
+using Microsoft.CodeAnalysis.Options;
 
 namespace Vision {
 
@@ -39,6 +43,19 @@ namespace Vision {
             options.UseSqlServer(Configuration.GetConnectionString("Vision")));
             services.AddDbContext<UserContext>(options =>
             options.UseSqlServer(Configuration.GetConnectionString("Vision")));
+
+            services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+                .AddCookie(CookieAuthenticationDefaults.AuthenticationScheme, option => {
+                    option.AccessDeniedPath = "/Account/Login"; 
+                    option.LoginPath = "/Account/Login";
+                    option.Cookie.Name = "user-identity";
+                    option.Cookie.HttpOnly = true;
+
+                    // 注意，我们默认采用 HTTPS 协议，设置本项表示验证用户的 Cookie 在
+                    // 非 HTTPS 下不会发送，如果要适配 HTTP 协议，修改未 SameAsRequest.
+
+                    option.Cookie.SecurePolicy = Microsoft.AspNetCore.Http.CookieSecurePolicy.Always;
+                });
         }
 
         // This method gets called by the runtime. 
@@ -60,6 +77,12 @@ namespace Vision {
 
             app.UseRouting();
 
+            CookiePolicyOptions cookieOptions = new CookiePolicyOptions();
+            cookieOptions.HttpOnly = Microsoft.AspNetCore.CookiePolicy.HttpOnlyPolicy.Always;
+            cookieOptions.Secure = CookieSecurePolicy.Always;
+
+            app.UseCookiePolicy(cookieOptions);
+            app.UseAuthentication();
             app.UseAuthorization();
 
             app.UseEndpoints(endpoints => {

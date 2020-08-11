@@ -1,0 +1,29 @@
+﻿@{
+    ViewData["Title"] = "注册用户";
+}
+
+<h1>注册新用户</h1>
+
+<form asp-action="Register">
+    <table>
+        <tbody>
+            <tr>
+                <td><label class="control-label">用户名</label></td>
+                <td><input value="" name="username" placeholder="注册用户名" /></td>
+            </tr>
+            <tr>
+                <td><label class="control-label">密码</label></td>
+                <td><input value="" name="password" placeholder="输入大小写敏感的密码" /></td>
+            </tr>
+            <tr>
+                <td><label class="control-label">联系方式</label></td>
+                <td><input value="" name="contact" placeholder="可用的邮箱地址" /></td>
+            </tr>
+            <tr>
+                <td><label class="control-label">等级</label></td>
+                <td><input value="" name="level" placeholder="" /></td>
+            </tr>
+        </tbody>
+    </table>
+    <input type="submit" value="    注册    " />
+</form>

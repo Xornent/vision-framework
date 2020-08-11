@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
+using System.Reflection.Metadata.Ecma335;
 using System.Threading.Tasks;
 using Vision.Data;
 using Vision.Markup.Ast;
@@ -33,9 +34,12 @@ namespace Vision.Markup {
         public List<string> NotFoundTemplates = new List<string>();
 
         public List<CategoryItem> Categories = new List<CategoryItem>();
-        public List<Reference> References = new List<Reference>();
-        public List<Footnote> Footnotes = new List<Footnote>();
+        public Dictionary<string, string> References = new Dictionary<string, string> ();
+        public Dictionary<string, string> Footnotes = new Dictionary<string, string>();
         public List<ExternalLink> ExternalLinks = new List<ExternalLink>();
+
+        public List<List<Section>> Models = new List<List<Section>>();
+        public List<string> StringifyModels = new List<string>();
 
         // 这里预定义了所有系统变量和别称表
         // 参见语言标准：预定义的变量
@@ -158,8 +162,19 @@ namespace Vision.Markup {
         public void Execute(Page page, Record record, User user, string namespaces, PageContext ctx_pages, UserContext ctx_users) {
             UpdateSystemVariables(page, record, user, namespaces, ctx_pages, ctx_users);
             ExecuteProgrammables(this.Children, 1);
+            foreach (var item in this.Models) {
+                ExecuteProgrammables(item, 1);
+            }
             ExecuteExplicitBreaks();
             ExecuteCommands();
+
+            foreach (var item in this.Models) {
+                string s = "";
+                foreach (var child in item) {
+                    s = s + child.ToString();
+                }
+                StringifyModels.Add(s);
+            }
         }
 
         public void ExecuteProgrammables(List<Section> sect, int level = 1) {
@@ -181,6 +196,8 @@ namespace Vision.Markup {
                 Type t = item.GetType();
                 if (t == typeof(ParagraphSection)) {
                     ExecuteProgrammables((item as ParagraphSection).Children, level + 1);
+                } else if (t == typeof(HeadlineSection)) {
+                    ExecuteProgrammables((item as HeadlineSection).Children);
                 } else if (t == typeof(ArrayData)) {
                     foreach (var list in (item as ArrayData).Value)
                         ExecuteProgrammables(list, level + 1);
@@ -201,6 +218,10 @@ namespace Vision.Markup {
 
                             try {
                                 DataSection data = TextData.GetOperationVariables(elem.Parameters["evaluation"].First().Raw, this);
+                                if (data is TextData) {
+                                    (data as TextData).UpdateVariables(this);
+                                    data = DataSection.Parse(data.Content);
+                                }
                                 if (data.Type == DataSection.DataSectionType.Boolean)
                                     success = (data as BooleanData).Value;
                                 else {
@@ -210,7 +231,7 @@ namespace Vision.Markup {
 
                                     success = true;
                                 }
-                            } catch {
+                            } catch (Exception ex) {
                                 success = false;
                             }
 
@@ -241,6 +262,19 @@ namespace Vision.Markup {
                             DataSection from = elem.Parameters["from"].First() as DataSection;
                             DataSection to = elem.Parameters["to"].First() as DataSection;
                             DataSection step = elem.Parameters["step"].First() as DataSection;
+
+                            if (from is TextData) {
+                                (from as TextData).UpdateVariables(this);
+                                from = DataSection.Parse(from.Content);
+                            }
+                            if (to is TextData) {
+                                (to as TextData).UpdateVariables(this);
+                                to = DataSection.Parse(to.Content);
+                            }
+                            if (step is TextData) {
+                                (step as TextData).UpdateVariables(this);
+                                step = DataSection.Parse(step.Content);
+                            }
                             float f = 0;
                             if (from is IntegerData || from is FloatData)
                                 if (to is IntegerData || to is FloatData)
@@ -250,7 +284,7 @@ namespace Vision.Markup {
                                         float _s = float.Parse(step.Raw);
 
                                         string varname = elem.Parameters["define"].First().Raw;
-                                        Variables.Add(varname, new FloatData());
+                                        SetVariable(varname, new FloatData());
 
                                         List<Section> for_replacements = new List<Section>();
                                         for (float temp = f; temp <= _t; temp += _s) {
@@ -318,30 +352,330 @@ namespace Vision.Markup {
                                 val = arr;
                             }
 
-                            if (this.Variables.ContainsKey(setvar)) {
-                                this.Variables[setvar] = val;
-                            } else {
-                                this.Variables.Add(setvar, val);
-                            }
+                            SetVariable(setvar, val);
 
                             break;
-                       
-                       /*   toc                         | -                 | 生成目录
-                        *   referencelist               | reflist           | 列举出本页中所有的参考
-                        *   externallist                | extlist           | 列举出本页中所有的外部链接
-                        *   footnotelist                | footlist          | 列举出本页所有的脚注
-                        *   sign                        | -                 | 编者和编辑时间签名
-                        *   break                       | br                | 命令文本换行符
-                        *   
-                        *   这些是其他的命令项，在此不做解析
-                        */
 
-                        case "toc": break;
-                        case "referencelist": break;
+                        /*   toc                         | -                 | 生成目录
+                         *   referencelist               | reflist           | 列举出本页中所有的参考
+                         *   externallist                | extlist           | 列举出本页中所有的外部链接
+                         *   footnotelist                | footlist          | 列举出本页所有的脚注
+                         *   sign                        | -                 | 编者和编辑时间签名
+                         *   break                       | br                | 命令文本换行符
+                         *   
+                         *   这些是其他的命令项，在此不做解析
+                         */
+
+                        case "toc":
+                            string tocraw = "(toccontainer: (content: <div class='toctitle'>章节目录</div>";
+                            List<CategoryItem> categories = new List<CategoryItem>();
+                            foreach (var title in this.Children) {
+                                if (title is HeadlineSection) {
+                                    var ttl = (title as HeadlineSection);
+                                    ElementSection tempelem = new ElementSection();
+                                    tempelem.Parse("(content: " + ttl.Raw + ")");
+                                    var contents = tempelem.Parameters["content"];
+                                    if (ttl.Level == 2)
+                                        contents.Insert(0, new TextData((categories.Count + 1).ToString() + " "));
+                                    else if (ttl.Level == 3)
+                                        contents.Insert(0, new TextData((categories.Count).ToString() + "." + (categories.Last().Children.Count + 1).ToString() + " "));
+                                    else if (ttl.Level == 3)
+                                        contents.Insert(0, new TextData((categories.Count).ToString() + "." + (categories.Last().Children.Count).ToString() +
+                                            "." + (categories.Last().Children.Last().Children.Count + 1).ToString() + " "));
+
+                                    if (ttl.Level == 2)
+                                        categories.Add(new CategoryItem()
+                                        {
+                                            Content = contents,
+                                            Location = (categories.Count + 1).ToString()
+                                        });
+                                    else if (ttl.Level == 3)
+                                        categories.Last().Children.Add(new CategoryItem()
+                                        {
+                                            Content = contents,
+                                            Location = (categories.Count).ToString() + "_" + (categories.Last().Children.Count + 1).ToString()
+                                        });
+                                    else if (ttl.Level == 4)
+                                        categories.Last().Children.Last().Children.Add(new CategoryItem()
+                                        {
+                                            Content = contents,
+                                            Location = (categories.Count).ToString() + "_" + (categories.Last().Children.Count).ToString() +
+                                            "_" + (categories.Last().Children.Last().Children.Count + 1).ToString()
+                                        });
+                                }
+                            }
+
+                            foreach (var cat in categories) {
+                                tocraw = tocraw + "" + cat.ToString("tocitem");
+                            }
+                            tocraw = tocraw + "))";
+
+                            ElementSection temptoc = new ElementSection();
+                            temptoc.Parse("(content: " + tocraw + ")");
+                            List<Section> toc = temptoc.Parameters["content"];
+
+                            int __delta = toc.Count - 1;
+                            sect.RemoveAt(count);
+                            if (toc.Any())
+                                sect.InsertRange(count, toc);
+                            total += __delta;
+                            count--;
+
+                            break;
+
+                        case "referencelist":
+                            string rawlist = "<div class='ref-list'><ol>";
+                            string rawitem = "";
+                            List<string> htmllist = new List<string>();
+                            int i = 0;
+                            foreach (var refs in this.References) {
+                                if (!refs.Key.Contains("_")) {
+                                    if (!string.IsNullOrWhiteSpace(rawitem)) {
+                                        htmllist.Add(rawitem);
+                                    }
+                                    rawitem = "<li id='cite_item-"+refs.Key+"'><span><sup><b><a href='#cite_ref-" + refs.Key + "'>[0]</a>";
+                                    i = 1;
+                                } else {
+                                    rawitem = rawitem + "<a href='#cite_ref-" + refs.Key + "'>[" + i + "]</a>";
+                                    i++;
+                                }
+                            }
+
+                            if (!string.IsNullOrWhiteSpace(rawitem)) {
+                                htmllist.Add(rawitem);
+                            }
+
+                            foreach (var refs in this.References) {
+                                if (!refs.Key.Contains("_")) {
+                                    int pc = int.Parse(refs.Key) - 1;
+                                    htmllist[pc] = htmllist[pc] + "</b></sup></span><span>" +
+                                        refs.Value + "</span></li>";
+                                }
+                            }
+
+                            foreach (var refs in htmllist) {
+                                rawlist = rawlist + refs;
+                            }
+                            rawlist = rawlist + "</ol></div>";
+
+                            ElementSection el = new ElementSection();
+                            el.Parse("(content: " + rawlist + ")");
+                            List<Section> l = el.Parameters["content"];
+
+                            int _delta = l.Count - 1;
+                            sect.RemoveAt(count);
+                            if (l.Any())
+                                sect.InsertRange(count, l);
+                            total += _delta;
+                            count--;
+
+                            break;
+
                         case "externallist": break;
-                        case "footnotelist": break;
+
+                        case "footnotelist":
+                            rawlist = "<div class='note-list'><ol>";
+                            rawitem = "";
+                            htmllist = new List<string>();
+                            i = 0;
+                            foreach (var refs in this.Footnotes) {
+                                if (!refs.Key.Contains("_")) {
+                                    if (!string.IsNullOrWhiteSpace(rawitem)) {
+                                        htmllist.Add(rawitem);
+                                    }
+                                    rawitem = "<li id='note_item-"+ MarkupParser.ToRomanLower(int.Parse(refs.Key)) + "'><span><sup><b><a href='#note_ref-" + MarkupParser.ToRomanLower(int.Parse(refs.Key)) + "'>[0]</a>";
+                                    i = 1;
+                                } else {
+
+                                    rawitem = rawitem + "<a href='#note_ref-" + refs.Key + "'>[" + i + "]</a>";
+                                    i++;
+                                }
+                            }
+
+                            if (!string.IsNullOrWhiteSpace(rawitem)) {
+                                htmllist.Add(rawitem);
+                            }
+
+                            foreach (var refs in this.Footnotes) {
+                                if (!refs.Key.Contains("_")) {
+                                    int pc = int.Parse(refs.Key) - 1;
+                                    htmllist[pc] = htmllist[pc] + "</b></sup></span><span>" +
+                                        refs.Value + "</span></li>";
+                                }
+                            }
+
+                            foreach (var refs in htmllist) {
+                                rawlist = rawlist + refs;
+                            }
+                            rawlist = rawlist + "</ol></div>";
+
+                            el = new ElementSection();
+                            el.Parse("(content: " + rawlist + ")");
+                            l = el.Parameters["content"];
+
+                            _delta = l.Count - 1;
+                            sect.RemoveAt(count);
+                            if (l.Any())
+                                sect.InsertRange(count, l);
+                            total += _delta;
+                            count--;
+
+                            break;
+
                         case "sign": break;
                         case "break": break;
+
+                        case "model":
+                            #region
+                            TextData mdName = (TextData) elem.Parameters["name"][0];
+                            mdName.UpdateVariables(this);
+                            string rawmd = "";
+                            var list_md = elem.Parameters["content"];
+                            foreach (var li in list_md) {
+                                rawmd = rawmd + li.Raw;
+                            }
+
+                            switch(mdName.Content.ToLower()) {
+                                case "info":
+                                    string _inf = @"
+    <table class='box-Current plainlinks metadata ambox ambox-notice'>
+          <tbody>
+              <tr>
+                  <td class='mbox-image'>
+                    <div style = 'width: 52px; margin-left: 10px;'>
+                    <img src='/images/page-markers/info.png' alt='' width='48' data-file-width='48' data-file-height='48' /></div>
+                </td>
+                <td class='mbox-text'>
+                    <div class='mbox-text-span'>" + rawmd + @"</div>
+                </td>
+            </tr>
+        </tbody>
+    </table> ";
+                                    this.Models.Add(new List<Section>() { new TextData(_inf) });
+                                    break;
+                                case "warn":
+                                    _inf = @"
+    <table class='box-Current plainlinks metadata ambox ambox-warning'>
+          <tbody>
+              <tr>
+                  <td class='mbox-image'>
+                    <div style = 'width: 52px; margin-left: 10px;'>
+                    <img src='/images/page-markers/warning.png' alt='' width='48' data-file-width='48' data-file-height='48' /></div>
+                </td>
+                <td class='mbox-text'>
+                    <div class='mbox-text-span'>" + rawmd + @"</div>
+                </td>
+            </tr>
+        </tbody>
+    </table> ";
+                                    this.Models.Add(new List<Section>() { new TextData(_inf) });
+                                    break;
+                                case "warnsevere":
+                                    _inf = @"
+    <table class='box-Current plainlinks metadata ambox ambox-warningsevere'>
+          <tbody>
+              <tr>
+                  <td class='mbox-image'>
+                    <div style = 'width: 52px; margin-left: 10px;'>
+                    <img src='/images/page-markers/warning.png' alt='' width='48' data-file-width='48' data-file-height='48' /></div>
+                </td>
+                <td class='mbox-text'>
+                    <div class='mbox-text-span'>" + rawmd + @"</div>
+                </td>
+            </tr>
+        </tbody>
+    </table> ";
+                                    this.Models.Add(new List<Section>() { new TextData(_inf) });
+                                    break;
+                                case "page":
+                                    _inf = @"
+    <table class='box-Current plainlinks metadata ambox ambox-notice'>
+          <tbody>
+              <tr>
+                  <td class='mbox-image'>
+                    <div style = 'width: 52px; margin-left: 10px;'>
+                    <img src='/images/page-markers/page.png' alt='' width='48' data-file-width='48' data-file-height='48' /></div>
+                </td>
+                <td class='mbox-text'>
+                    <div class='mbox-text-span'>" + rawmd + @"</div>
+                </td>
+            </tr>
+        </tbody>
+    </table> ";
+                                    this.Models.Add(new List<Section>() { new TextData(_inf) });
+                                    break;
+                                case "system":
+                                    _inf = @"
+    <table class='box-Current plainlinks metadata ambox ambox-notice'>
+          <tbody>
+              <tr>
+                  <td class='mbox-image'>
+                    <div style = 'width: 52px; margin-left: 10px;'>
+                    <img src='/images/page-markers/system.png' alt='' width='48' data-file-width='48' data-file-height='48' /></div>
+                </td>
+                <td class='mbox-text'>
+                    <div class='mbox-text-span'>" + rawmd + @"</div>
+                </td>
+            </tr>
+        </tbody>
+    </table> ";
+                                    this.Models.Add(new List<Section>() { new TextData(_inf) });
+                                    break;
+                                case "history":
+                                    _inf = @"
+    <table class='box-Current plainlinks metadata ambox ambox-notice'>
+          <tbody>
+              <tr>
+                  <td class='mbox-image'>
+                    <div style = 'width: 52px; margin-left: 10px;'>
+                    <img src='/images/page-markers/history.png' alt='' width='48' data-file-width='48' data-file-height='48' /></div>
+                </td>
+                <td class='mbox-text'>
+                    <div class='mbox-text-span'>" + rawmd + @"</div>
+                </td>
+            </tr>
+        </tbody>
+    </table> ";
+                                    this.Models.Add(new List<Section>() { new TextData(_inf) });
+                                    break;
+                                case "category":
+                                    _inf = @"
+    <table class='box-Current plainlinks metadata ambox ambox-notice'>
+          <tbody>
+              <tr>
+                  <td class='mbox-image'>
+                    <div style = 'width: 52px; margin-left: 10px;'>
+                    <img src='/images/page-markers/category.png' alt='' width='48' data-file-width='48' data-file-height='48' /></div>
+                </td>
+                <td class='mbox-text'>
+                    <div class='mbox-text-span'>" + rawmd + @"</div>
+                </td>
+            </tr>
+        </tbody>
+    </table> ";
+                                    this.Models.Add(new List<Section>() { new TextData(_inf) });
+                                    break;
+                                default:
+                                    _inf = @"
+    <table class='box-Current plainlinks metadata ambox ambox-notice'>
+          <tbody>
+              <tr>
+                  <td class='mbox-image'>
+                    <div style = 'width: 52px; margin-left: 10px;'>
+                    <img src='/images/page-markers/info.png' alt='' width='48' data-file-width='48' data-file-height='48' /></div>
+                </td>
+                <td class='mbox-text'>
+                    <div class='mbox-text-span'>" + rawmd + @"</div>
+                </td>
+            </tr>
+        </tbody>
+    </table> ";
+                                    this.Models.Add(new List<Section>() { new TextData(_inf) });
+                                    break;
+                            }
+                            #endregion
+
+                            break;
 
                         default:
 
@@ -354,16 +688,40 @@ namespace Vision.Markup {
 
                                 // 添加命名变量
 
+                                // Issue 1 2020.08.06
+
+                                // 这里我们使用保留键，为了应对如下情况：
+                                // (a: ... （注册变量x）
+                                //      ... (a: ... （重复注册变量x），此处将原来的 x 覆盖，此处保留键
+                                //              ...
+                                //          ) 此处将 x 变量直接移除
+                                //          Solve 1 在此处加回保留键
+                                //      ... Issue 1.1 再此处使用父元素的 x 时，发现找不到 x，因为已经被移除
+                                // ) Issue 1.2 无法移除 x
+
+                                // 我们在进入每一个模板时，检查有没有重名的键，有就临时储存起来，
+                                // 这样，在模板执行完时加回，就恢复了父元素的运行状态。
+
+                                Dictionary<string, DataSection> reserved = new Dictionary<string, DataSection>();
                                 foreach (var vars in elem.Parameters) {
-                                    if (vars.Value.Count == 1)
-                                        this.SetVariable(vars.Key, vars.Value.First() as DataSection);
-                                    else if (vars.Value.Count > 1) {
+                                    if (this.Variables.ContainsKey(vars.Key)) {
+                                        reserved.Add(vars.Key, Variables[vars.Key]);
+                                    }
+                                }
+
+                                foreach (var vars in elem.Parameters) {
+                                    if (vars.Value.Count == 1) {
+                                        DataSection vari = vars.Value.First() as DataSection;
+                                        if (vari is TextData) (vari as TextData).UpdateVariables(this);
+                                        this.SetVariable(vars.Key, vari);
+                                    } else if (vars.Value.Count > 1) {
 
                                         // 这是实现的断言（我们考虑在标准中加上）
 
                                         ArrayData arr = new ArrayData();
                                         string raw = "";
                                         foreach (var obj in vars.Value) {
+                                            if (obj is TextData) (obj as TextData).UpdateVariables(this);
                                             arr.Value.Add(new List<Section>() { obj });
                                             raw = raw + "(" + obj.Raw + ")";
                                         }
@@ -373,7 +731,7 @@ namespace Vision.Markup {
                                 }
 
                                 var template = Templating.TemplateRegistry.Registry.GetValueOrDefault(elem.Name.ToLower());
-                                
+
                                 // TextData 激活化
 
                                 List<Section> templ = CopySections(template);
@@ -381,6 +739,12 @@ namespace Vision.Markup {
 
                                 foreach (var vars in elem.Parameters) {
                                     this.Variables.Remove(vars.Key);
+                                }
+
+                                // Issue Solve 1: 加回保留键
+
+                                foreach (var vars in reserved) {
+                                    this.SetVariable(vars.Key, vars.Value);
                                 }
 
                                 int delta = templ.Count - 1;
@@ -398,7 +762,7 @@ namespace Vision.Markup {
                     text.UpdateVariables(this);
 
                     if (text.Content.Contains("(") ||
-                        text.Content.Contains("#") ) {
+                        text.Content.Contains("#")) {
 
                         // 事实上，每个变量都可以是一个数组或一个组合物。因此可以达到传递
                         // 批量参数的效果。 这也导致了许多字符串在进行替换之后不再是一个字符串
@@ -413,12 +777,16 @@ namespace Vision.Markup {
                         var replacement = elem.Parameters["content"];
                         int delta = replacement.Count - 1;
 
-                        sect.RemoveAt(count);
-                        if (replacement.Any())
-                            sect.InsertRange(count, replacement);
+                        if (delta == 0 && replacement[0] is TextData) {
 
-                        total += delta;
-                        count--;
+                        } else {
+                            sect.RemoveAt(count);
+                            if (replacement.Any())
+                                sect.InsertRange(count, replacement);
+
+                            total += delta;
+                            count--;
+                        }
                     }
                 }
             }

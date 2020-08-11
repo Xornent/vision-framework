@@ -1,6 +1,6 @@
 ﻿@model (Page _Page, Record _Record)
 @{
-    ViewData["Title"] = Model._Page.Title.Split('#')[0] ;
+    ViewData["Title"] = Model._Page.Title.Split('#')[0];
 }
 
 <h1>@Model._Page.Title</h1>
@@ -8,3 +8,38 @@
 @(new Microsoft.AspNetCore.Html.HtmlString(ViewBag.HtmlPage))
 
 <div class="placeholder"><p>&nbsp;</p></div>
+
+@section side {
+    <h3>本页面的归档</h3>
+@if (Model._Page.Models.Any()) {
+    @foreach (var item in Model._Page.Models) {
+        @(new Microsoft.AspNetCore.Html.HtmlString(item))
+    }
+} else {
+    <p class="margin-top:15px; margin-bottom:15px; text-align:center;">本界面无任何模版</p>
+}
+
+    <h3>历史记录</h3>
+    <p>这里显示最近 10 次修改的修改记录，以及相应的摘要信息，查询完整的文章历史，参见<a asp-action="History">全部历史记录</a></p>
+    <ul>
+        @if (Model._Record.Changes.Count < 10) {
+            @for (int i = Model._Record.Changes.Count - 1; i >= 0; i--) {
+                <li>
+                    <span><b>第 <code> <a href="/home/compare/@(Model._Page.Id+"-"+(i+1).ToString())">@(i+1)</a> </code> 版：</b></span> |
+                    <span><b><code>@Model._Record.Changes[i].User</code> 发布</b></span> <br />
+                    <span><b>发布时间：<code>@Model._Record.Changes[i].Post.ToString()</code></b></span><br />
+                    <span><code>@(new Microsoft.AspNetCore.Html.HtmlString(Model._Record.Changes[i].Summary))</code></span>
+                </li>
+            }
+        } else {
+            @for (int i = Model._Record.Changes.Count - 1; i >= Model._Record.Changes.Count - 10; i--) {
+                <li>
+                    <span><b>第 <code> <a href="/home/compare/@(Model._Page.Id+"-"+(i+1).ToString())">@(i+1)</a> </code> 版：</b></span> |
+                    <span><b><code>@Model._Record.Changes[i].User</code> 发布</b></span> <br />
+                    <span><b>发布时间：<code>@Model._Record.Changes[i].Post.ToString()</code></b></span><br />
+                    <span><code>@(new Microsoft.AspNetCore.Html.HtmlString(Model._Record.Changes[i].Summary))</code></span>
+                </li>
+            }
+        }
+    </ul>
+}

@@ -1,7 +1,87 @@
 ﻿.main {
-    width:80%;
-    margin-left:10%;
-    margin-right:10%
+    width:100%;
+}
+
+.mbox-text {
+    padding: 6px;
+}
+
+@media screen and (min-width: 1230px) {
+    .table-main {
+        margin-left: 10%;
+        width: 85%;
+        margin-right: 5%
+    }
+
+    .page-content {
+        width: 70%;
+    }
+
+    .page-panel {
+        width: 30%;
+    }
+
+    .side {
+        margin-top: 50px;
+        margin-left: 40px;
+    }
+
+    .mbox-image {
+        display: normal;
+    }
+}
+
+@media screen and (max-width: 1230px) {
+    .table-main {
+        margin-left: 10%;
+        width: 85%;
+        margin-right: 5%
+    }
+
+    .page-content {
+        width: 70%;
+    }
+
+    .page-panel {
+        width: 30%;
+    }
+
+    .side {
+        margin-top: 50px;
+        margin-left: 40px;
+    }
+
+    .mbox-image {
+        display: none;
+    }
+}
+
+@media screen and (max-width: 1150px) {
+    .table-main {
+        margin-left: 10%;
+        width: 80%;
+        margin-right: 10%
+    }
+
+    .page-content {
+        width: 100%
+    }
+
+    .page-panel {
+        display: none;
+    }
+}
+
+@media screen and (max-width: 740px) {
+    .nav-menu-wrapper {
+        display: none !important;
+    }
+}
+
+@media screen and (min-width: 740px) {
+    .nav-menu-wrapper {
+        display: normal;
+    }
 }
 
 #content {
@@ -13,7 +93,7 @@
 }
 
     .main h4, .main h5 {
-        font-family: -apple-system, "PingFang SC", sans-serif;
+        font-family:Georgia, SimSun, serif;
     }
 
 h1 {
@@ -54,6 +134,7 @@ h5 {
 }
 
 h1, h2, h3, h4, h5 {
+    overflow: hidden;
     font-weight: 900;
 }
 
@@ -64,7 +145,7 @@ hr {
     background-image: linear-gradient(to right, rgb(0 0 0 / 24%), rgba(0, 0, 0, 0.75), rgb(0 0 0 / 15%));
 }
 
-#content ul {
+#content ul, #content ol {
     margin-left: 40px;
     margin-top: 10px;
     margin-bottom: 10px;
@@ -354,11 +435,12 @@ a {
     color:Highlight;
     text-decoration:none;
     transition: color linear 0.3s;
+    font-weight: 700;
 }
 
-a:hover {
-    color:cornflowerblue;
-}
+    a:hover {
+        color: #0b0080 !important;
+    }
 
 code {
     font-family:Consolas;
@@ -406,4 +488,68 @@ p {
 .placeholder {
     margin: 30px;
     content: ' ';
+}
+
+
+table.ombox-notice {
+    border: 1px solid #a2a9b1;
+}
+
+table.ombox {
+    margin: 4px 10%;
+    border-collapse: collapse;
+    border: 1px solid #a2a9b1;
+    background-color: #f8f9fa;
+    box-sizing: border-box;
+}
+
+table {
+    display: table;
+    border-collapse: separate;
+    border-spacing: 2px;
+    border-color: grey;
+}
+
+    table.ambox-notice {
+        border-left: 10px solid #36c;
+    }
+
+    table.ambox-warning {
+        border-left: 10px solid rgb(192, 157, 0);
+    }
+
+    table.ambox-warningsevere {
+        border-left: 10px solid rgb(207, 100, 0);
+    }
+
+    table.ambox-severe {
+        border-left: 10px solid rgb(204, 51, 51);
+    }
+
+    table.ambox {
+        margin: 0;
+        background-color: #fbfbfb;
+        box-sizing: border-box;
+        box-shadow: -1px 1px 3px 0px #cecece;
+        border-radius: 3px;
+        margin-top: 15px;
+        font-size: 0.8em;
+        font-family: Georgia, SimSun, serif;
+    }
+
+code {
+    font-family: consolas, SimSun, monospace !important;
+}
+
+.side li {
+    margin-bottom: 6px;
+}
+
+.side p {
+    font-size: 0.9em;
+}
+
+.side ul,
+.side ol {
+    font-size: 0.8em;
 }

@@ -37,8 +37,11 @@ namespace Vision.Markup.Ast {
                     }
 
                     DataSection data = doc.GetVariable(val);
-                    if (data != null) return data.Raw;
-                    else return "<code>" + val + " 未声明</code>";
+                    if (data != null) {
+                        if (data is TextData)
+                            return data.Content;
+                        else return data.Raw;
+                    } else return "<code>" + val + " 未声明</code>";
                 });
 
                 this.Content = result;
@@ -75,7 +78,7 @@ namespace Vision.Markup.Ast {
                 }
 
                 foreach (var name in param) {
-                    par.Add(doc.GetVariable(name.Trim()));
+                    par.Add(DataSection.Parse( doc.GetVariable(name.Trim()).Content.Trim()));
                     paramtypes.Add(par.Last().GetType());
                 }
 

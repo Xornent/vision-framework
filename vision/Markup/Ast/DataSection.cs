@@ -39,15 +39,15 @@ namespace Vision.Markup.Ast {
 
             bool s_int = int.TryParse(trimmed, out t_int);
             if (s_int) {
-                if (trimmed.Contains(".")) return new FloatData() { Raw = trimmed, Value = t_int };
-                else return new IntegerData() { Raw = trimmed, Value = t_int };
+                if (trimmed.Contains(".")) return new FloatData() { Raw = trimmed, Value = t_int, Content=trimmed };
+                else return new IntegerData() { Raw = trimmed, Value = t_int, Content = trimmed };
             }
 
             bool s_float = float.TryParse(trimmed, out t_float);
-            if (s_float) return new FloatData() { Raw = trimmed, Value = t_float };
+            if (s_float) return new FloatData() { Raw = trimmed, Value = t_float, Content = trimmed };
 
             bool s_datetime = DateTime.TryParse(trimmed, out t_datetime);
-            if (s_datetime) return new DateTimeData() { Raw = trimmed, Value = t_datetime };
+            if (s_datetime) return new DateTimeData() { Raw = trimmed, Value = t_datetime, Content = trimmed };
 
             if (trimmed.Contains("|")) {
                 string[] enums = trimmed.Split('|');
@@ -59,7 +59,7 @@ namespace Vision.Markup.Ast {
                     object val = null;
                     bool get_val = Enum.TryParse(t, enums[1].Trim().ToUpper(), true, out val);
                     if (get_val) {
-                        return new EnumerationData() { Raw = trimmed, Enumeration = t, Value = Convert.ToInt32(val) };
+                        return new EnumerationData() { Raw = trimmed, Enumeration = t, Value = Convert.ToInt32(val), Content = trimmed };
                     }
                 }
 
@@ -119,8 +119,88 @@ namespace Vision.Markup.Ast {
             return false;
         }
 
-        public static FloatData sin(FloatData f) {
-            return new FloatData((float)Math.Sin(f.Value));
+        public static bool More(DataSection variable, DataSection value) {
+            if (variable is IntegerData ||
+               variable is FloatData) {
+                if (value is IntegerData ||
+                   value is FloatData) {
+                    return float.Parse(variable.Raw) > float.Parse(value.Raw);
+                } else return false;
+            }
+
+            if (variable is DateTimeData && value is DateTimeData) {
+                return DateTime.Parse(variable.Raw) > DateTime.Parse(value.Raw);
+            }
+
+            return false;
+        }
+
+        public static bool Less(DataSection variable, DataSection value) {
+            if (variable is IntegerData ||
+               variable is FloatData) {
+                if (value is IntegerData ||
+                   value is FloatData) {
+                    return float.Parse(variable.Raw) < float.Parse(value.Raw);
+                } else return false;
+            }
+
+            if (variable is DateTimeData && value is DateTimeData) {
+                return DateTime.Parse(variable.Raw) < DateTime.Parse(value.Raw);
+            }
+
+            return false;
+        }
+
+        public static bool NoLess(DataSection variable, DataSection value) {
+            if (variable is IntegerData ||
+               variable is FloatData) {
+                if (value is IntegerData ||
+                   value is FloatData) {
+                    return float.Parse(variable.Raw) >= float.Parse(value.Raw);
+                } else return false;
+            }
+
+            if (variable is DateTimeData && value is DateTimeData) {
+                return DateTime.Parse(variable.Raw) >= DateTime.Parse(value.Raw);
+            }
+
+            return false;
+        }
+
+        public static bool NoMore(DataSection variable, DataSection value) {
+            if (variable is IntegerData ||
+               variable is FloatData) {
+                if (value is IntegerData ||
+                   value is FloatData) {
+                    return float.Parse(variable.Raw) <= float.Parse(value.Raw);
+                } else return false;
+            }
+
+            if (variable is DateTimeData && value is DateTimeData) {
+                return DateTime.Parse(variable.Raw) <= DateTime.Parse(value.Raw);
+            }
+
+            return false;
+        }
+
+        public static BooleanData equal(DataSection left, DataSection right) {
+            return new BooleanData( Equal(left, right));
+        }
+
+        public static BooleanData more(DataSection left, DataSection right) {
+            return new BooleanData(More(left, right));
+        }
+
+        public static BooleanData less(DataSection left, DataSection right) {
+            return new BooleanData(Less(left, right));
+        }
+
+        public static BooleanData nomore(DataSection left, DataSection right) {
+            return new BooleanData(NoMore(left, right));
+        }
+
+        public static BooleanData noless(DataSection left, DataSection right) {
+            return new BooleanData(NoLess(left, right));
         }
     }
 }

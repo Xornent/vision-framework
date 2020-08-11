@@ -78,5 +78,9 @@ namespace Vision.Models {
 
         public int Use { get; set; }
         public string Body { get; set; }
+
+        [BindNever]
+        [NotMapped]
+        public List<Change> Changes { get; set; } = new List<Change>();
     }
 }

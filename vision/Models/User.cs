@@ -20,5 +20,8 @@ namespace Vision.Models {
         public string Edit { get; set; }
         public int Evaluation { get; set; }
         public int Banned { get; set; }
+
+        [MaxLength(50)]
+        public string Password { get; set; }
     }
 }

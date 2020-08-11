@@ -10,12 +10,17 @@
     <link rel="stylesheet" href="~/css/views/basis.css" />
     <link rel="stylesheet" href="~/css/views/print.css" />
 
+    <link rel="stylesheet" href="~/css/templating/box-flows.css" />
+
+    <script type="text/javascript" src="~/syntax/prettify.js"></script>
+    <link rel="stylesheet" href="~/syntax/prettify.css" />
+
     <script src="~/js/site.js"></script>
     <script src="~/js/views/global.js"></script>
     <script src="~/editor/min/vs/loader.js"></script>
 </head>
 
-<body id="body" onscroll="shrink();">
+<body id="body" onscroll="shrink();" onload="PR.prettyPrint()">
     <div class="header noprint">
         <div class="nav-sticky nav-active has-subnav">
             <header id="primary" class="nav-wrapper" role="banner" style="height:80px;">
@@ -68,60 +73,61 @@
                                     </ul>
                                 </li>
 
-                                @if (Convert.ToBoolean(ViewData["IsPage"])) { 
-                                <li class="nav-menu-item has-submenu">
-                                    <a class="nav-menu-label" data-type="item" aria-haspopup="true" aria-expanded="false"
-                                       role="button" onClick="nav_click(this)" id="nav.page">
-                                        页面
-                                    </a>
-                                    <ul class="nav-submenus" data-type="popup" role="group" data-gnav-scrollable="desktop" id="ul.page">
-                                        <li class="nav-submenu-wrapper">
-                                            <h5 class="nav-submenu-headline">你正在查看的页面</h5>
-                                            <ul class="nav-submenu" data-type="column">
-                                                <li class="nav-submenu-item">
-                                                    <a href="~/home/page/Talk:@ViewData["PageTitle"]" class="nav-submenu-link" data-type="columnitem" target="_self">
-                                                        <span class="nav-submenu-title">讨论本主题</span>
-                                                        <span class="nav-submenu-description">
-                                                            关于此页面的问题和改进措施，以及涉及相应 <br />
-                                                            主题的讨论页面
-                                                        </span>
-                                                    </a>
-                                                </li>
-                                                <li class="nav-submenu-item">
-                                                    <a href="~/home/edit/@ViewData["PageId"]" class="nav-submenu-link" data-type="columnitem" target="_self">
-                                                        <span class="nav-submenu-title">查看（编辑）页面源代码</span>
-                                                        <span class="nav-submenu-description">
-                                                            查看和修改源代码，提交当前页面的新版本<br />
-                                                            请查看 基础知识：Vision Markup 语言
-                                                        </span>
-                                                    </a>
-                                                </li>
-                                                <li class="nav-submenu-item">
-                                                    <a onclick="window.print()" class="nav-submenu-link" data-type="columnitem" target="_self">
-                                                        <span class="nav-submenu-title">打印当前页</span>
-                                                        <span class="nav-submenu-description">
-                                                            打印 Vision 生成的文本文档
-                                                        </span>
-                                                    </a>
-                                                </li>
-                                                <li class="nav-submenu-item">
-                                                    <a href="~/home/page/@ViewData["PageTitle"]" class="nav-submenu-link" data-type="columnitem" target="_self" download="@ViewData["PageTitle"] - Vision.html">
-                                                        <span class="nav-submenu-title">下载离线 HTML 文档</span>
-                                                        <span class="nav-submenu-description">
-                                                            下载离线网页和排版以备无网络时使用
-                                                        </span>
-                                                    </a>
-                                                </li>
-                                                <li class="nav-submenu-item">
-                                                    <a href="/#" class="nav-submenu-link" data-type="columnitem" target="_self">
-                                                        <span class="nav-submenu-title">随机条目</span>
-                                                    </a>
-                                                </li>
-                                            </ul>
-                                        </li>
-                                    </ul>
-                                </li>
+                                @if (Convert.ToBoolean(ViewData["IsPage"])) {
+                                    <li class="nav-menu-item has-submenu">
+                                        <a class="nav-menu-label" data-type="item" aria-haspopup="true" aria-expanded="false"
+                                           role="button" onClick="nav_click(this)" id="nav.page">
+                                            页面
+                                        </a>
+                                        <ul class="nav-submenus" data-type="popup" role="group" data-gnav-scrollable="desktop" id="ul.page">
+                                            <li class="nav-submenu-wrapper">
+                                                <h5 class="nav-submenu-headline">你正在查看的页面</h5>
+                                                <ul class="nav-submenu" data-type="column">
+                                                    <li class="nav-submenu-item">
+                                                        <a href="~/home/page/Talk:@ViewData["PageTitle"]" class="nav-submenu-link" data-type="columnitem" target="_self">
+                                                            <span class="nav-submenu-title">讨论本主题</span>
+                                                            <span class="nav-submenu-description">
+                                                                关于此页面的问题和改进措施，以及涉及相应 <br />
+                                                                主题的讨论页面
+                                                            </span>
+                                                        </a>
+                                                    </li>
+                                                    <li class="nav-submenu-item">
+                                                        <a href="~/home/edit/@ViewData["PageId"]" class="nav-submenu-link" data-type="columnitem" target="_self">
+                                                            <span class="nav-submenu-title">查看（编辑）页面源代码</span>
+                                                            <span class="nav-submenu-description">
+                                                                查看和修改源代码，提交当前页面的新版本<br />
+                                                                请查看 基础知识：Vision Markup 语言
+                                                            </span>
+                                                        </a>
+                                                    </li>
+                                                    <li class="nav-submenu-item">
+                                                        <a onclick="window.print()" class="nav-submenu-link" data-type="columnitem" target="_self">
+                                                            <span class="nav-submenu-title">打印当前页</span>
+                                                            <span class="nav-submenu-description">
+                                                                打印 Vision 生成的文本文档
+                                                            </span>
+                                                        </a>
+                                                    </li>
+                                                    <li class="nav-submenu-item">
+                                                        <a href="~/home/page/@ViewData["PageTitle"]" class="nav-submenu-link" data-type="columnitem" target="_self" download="@ViewData["PageTitle"] - Vision.html">
+                                                            <span class="nav-submenu-title">下载离线 HTML 文档</span>
+                                                            <span class="nav-submenu-description">
+                                                                下载离线网页和排版以备无网络时使用
+                                                            </span>
+                                                        </a>
+                                                    </li>
+                                                    <li class="nav-submenu-item">
+                                                        <a href="/#" class="nav-submenu-link" data-type="columnitem" target="_self">
+                                                            <span class="nav-submenu-title">随机条目</span>
+                                                        </a>
+                                                    </li>
+                                                </ul>
+                                            </li>
+                                        </ul>
+                                    </li>
                                 }
+
                                 <li class="nav-menu-item has-submenu">
                                     <a class="nav-menu-label" data-type="item" aria-haspopup="true" aria-expanded="false"
                                        role="button" onClick="nav_click(this)" id="nav.contrib">
@@ -144,15 +150,6 @@
                                                         <span class="nav-submenu-title">创建非词条门户页面</span>
                                                         <span class="nav-submenu-description">
                                                             新建门户界面，分类附加界面和其他自定义界面
-                                                        </span>
-                                                    </a>
-                                                </li>
-                                                <li class="nav-submenu-item">
-                                                    <a href="/#" class="nav-submenu-link" data-type="columnitem" target="_self">
-                                                        <span class="nav-submenu-title">界面审查</span>
-                                                        <span class="nav-submenu-description">
-                                                            具有相应权限的 Vision 用户审查待通过的提交<br />
-                                                            或者添加界面的注意警示符
                                                         </span>
                                                     </a>
                                                 </li>
@@ -220,38 +217,64 @@
                                             <h5 class="nav-submenu-headline">操作 Vision 用户信息</h5>
                                             <ul class="nav-submenu" data-type="column">
                                                 <li class="nav-submenu-item">
-                                                    <a href="/#" class="nav-submenu-link" data-type="columnitem" target="_self">
-                                                        <span class="nav-submenu-title">注册和切换用户</span>
+                                                    <a href="~/Account/Register" class="nav-submenu-link" data-type="columnitem" target="_self">
+                                                        <span class="nav-submenu-title">注册用户</span>
                                                         <span class="nav-submenu-description">
-                                                            注册新用户和登录其他用户
+                                                            在 Vision 注册用户，告知部分个人信息以被允许编辑<br />
+                                                            某些需要编辑者责任的条目。
                                                         </span>
                                                     </a>
                                                 </li>
                                                 <li class="nav-submenu-item">
-                                                    <a href="/#" class="nav-submenu-link" data-type="columnitem" target="_self">
-                                                        <span class="nav-submenu-title">本用户门户界面</span>
+                                                    <a href="~/Account/Login" class="nav-submenu-link" data-type="columnitem" target="_self">
+                                                        <span class="nav-submenu-title">登入和切换用户</span>
                                                         <span class="nav-submenu-description">
-                                                            查看当前用户的属性，资料，评级和贡献
+                                                            登录用户和切换其他用户
                                                         </span>
-                                                    </a>
-                                                </li>
-                                                <li class="nav-submenu-item">
-                                                    <a href="/#" class="nav-submenu-link" data-type="columnitem" target="_self">
-                                                        <span class="nav-submenu-title">退出当前用户</span>
                                                     </a>
                                                 </li>
                                                 <li class="nav-submenu-item">
                                                     <a href="/#" class="nav-submenu-link" data-type="columnitem" target="_self">
                                                         <span class="nav-submenu-title">问题反馈和投诉</span>
                                                         <span class="nav-submenu-description">
-                                                            反馈有关页面的问题，涉及国家安全和法律规定的内容；<br />
-                                                            投诉特定的用户和用户组至官方平台
+                                                            反馈有关页面的问题，涉及国家安全和法律规定<br />
+                                                            的内容；投诉特定的用户和用户组至官方平台
                                                         </span>
                                                     </a>
                                                 </li>
                                             </ul>
-                                        </li>
 
+                                            @if (Convert.ToBoolean(ViewData["AuthenticatedUser"])) {
+                                                <h5 class="nav-submenu-headline">@ViewData["AuthenticatedUserName"] 已登入</h5>
+                                                <ul>
+                                                    <li class="nav-submenu-item">
+                                                        <a href="~/Account/Profile" class="nav-submenu-link" data-type="columnitem" target="_self">
+                                                            <span class="nav-submenu-title">本用户门户界面</span>
+                                                            <span class="nav-submenu-description">
+                                                                查看当前用户的属性，资料，评级和贡献
+                                                            </span>
+                                                        </a>
+                                                    </li>
+                                                    @if (Convert.ToBoolean(ViewData["AuthenticatedAdministrator"])) {
+                                                        <li class="nav-submenu-item">
+                                                            <a href="/#" class="nav-submenu-link" data-type="columnitem" target="_self">
+                                                                <span class="nav-submenu-title">界面审查</span>
+                                                                <span class="nav-submenu-description">
+                                                                    具有相应权限的 Vision 用户审查待通过的提交<br />
+                                                                    或者添加界面的注意警示符
+                                                                </span>
+                                                            </a>
+                                                        </li>
+                                                    }
+                                                    <li class="nav-submenu-item">
+                                                        <a href="~/Account/Logout" class="nav-submenu-link" data-type="columnitem" target="_self">
+                                                            <span class="nav-submenu-title">退出当前用户</span>
+                                                        </a>
+                                                    </li>
+                                                </ul>
+                                            }
+
+                                        </li>
                                         <li class="nav-submenu-wrapper">
                                             <h5 class="nav-submenu-headline">基础知识</h5>
                                             <ul class="nav-submenu" data-type="column">
@@ -274,10 +297,10 @@
                                                 </li>
                                                 <li class="nav-submenu-item">
                                                     <a href="/#" class="nav-submenu-link" data-type="columnitem" target="_self">
-                                                        <span class="nav-submenu-title">检索 Lisp 方言</span>
+                                                        <span class="nav-submenu-title">模版和样式</span>
                                                         <span class="nav-submenu-description">
-                                                            Vision 使用特定的语言在搜索时用于附加条件筛选<br />
-                                                            和其他高级功能，使用其以个性化和精确搜索
+                                                            了解 Vision 中的模版项目及其实现和嵌套，<br />
+                                                            了解可编程性功能，使用样式描述个性化界面
                                                         </span>
                                                     </a>
                                                 </li>
@@ -285,8 +308,8 @@
                                                     <a href="/#" class="nav-submenu-link" data-type="columnitem" target="_self">
                                                         <span class="nav-submenu-title">Vision 标记语言</span>
                                                         <span class="nav-submenu-description">
-                                                            作为陈述 Vision 所有界面内容的简易标记语言，贡献者<br />
-                                                            应知晓如何表述 Vision 的界面元素，完成一篇文章
+                                                            作为陈述 Vision 所有界面内容的简易标记语言，<br />
+                                                            Vision Markup Language 的语言标准和实现
                                                         </span>
                                                     </a>
                                                 </li>
@@ -294,8 +317,9 @@
                                                     <a href="/#" class="nav-submenu-link" data-type="columnitem" target="_self">
                                                         <span class="nav-submenu-title">页面自动评估标准</span>
                                                         <span class="nav-submenu-description">
-                                                            在交给特定权限的其他用户审核之前，文档会通过自动<br />
-                                                            评估以提供更改建议；学习评估标准以写出更易通过的文章
+                                                            在交给特定权限的其他用户审核之前，文档会<br />
+                                                            通过自动评估以提供更改建议；学习评估标准<br />
+                                                            以写出更易通过的文章
                                                         </span>
                                                     </a>
                                                 </li>
@@ -314,7 +338,7 @@
                                             <h5 class="nav-submenu-headline">本项目详细信息</h5>
                                             <ul class="nav-submenu" data-type="column">
                                                 <li class="nav-submenu-item">
-                                                    <a href="/#" class="nav-submenu-link" data-type="columnitem" target="_self">
+                                                    <a href="~/Home/About" class="nav-submenu-link" data-type="columnitem" target="_self">
                                                         <span class="nav-submenu-title">Vision 简介</span>
                                                         <span class="nav-submenu-description">
                                                             介绍 Vision 项目和活动性质
@@ -322,15 +346,15 @@
                                                     </a>
                                                 </li>
                                                 <li class="nav-submenu-item">
-                                                    <a href="/#" class="nav-submenu-link" data-type="columnitem" target="_self">
+                                                    <a href="~/Home/Privacy" class="nav-submenu-link" data-type="columnitem" target="_self">
                                                         <span class="nav-submenu-title">隐私政策</span>
                                                         <span class="nav-submenu-description">
-                                                            查看 Vision 会如何采集和利用用户的隐私信息
+                                                            查看 Vision 会如何采集和利用<br />用户的隐私信息
                                                         </span>
                                                     </a>
                                                 </li>
                                                 <li class="nav-submenu-item">
-                                                    <a href="#" class="nav-submenu-cta is-visible" data-type="columnitem" target="_self">
+                                                    <a href="/Home/Donate" class="nav-submenu-cta is-visible" data-type="columnitem" target="_self">
                                                         <span class="nav-submenu-title">捐助项目 Vision</span>
                                                     </a>
                                                 </li>
@@ -339,35 +363,36 @@
                                     </ul>
                                 </li>
 
-                                <li>
-                                    <div class="search" id="div-search">
-                                        <table>
-                                            <tbody>
-                                                <tr>
-                                                    <td>
-                                                        <input type="text" placeholder="检索 Vision" name="" id="" value="">
-                                                    </td>
-                                                    <td>
-                                                        <button>
-                                                            <svg xmlns="http://www.w3.org/2000/svg"
-                                                                 xmlns:xlink="http://www.w3.org/1999/xlink"
-                                                                 width="16" height="16">
-                                                                <defs>
-                                                                    <path id="a" d="M9 .5a8.5 8.5 0 017.027 13.285l3.508 3.509c.13.13.13.341 0 .471l-1.084 1.085a.333.333 0 01-.471 0l-3.42-3.42A8.5 8.5 0 119 .5zm0 2.1a6.4 6.4 0 100 12.8A6.4 6.4 0 009 2.6z"></path>
-                                                                </defs>
-                                                                <g fill="none" fill-rule="evenodd" transform="scale(0.75,0.75)">
-                                                                    <mask id="b" fill="#fff"><use xlink:href="#a"></use></mask>
-                                                                    <g fill="#BFBFBF" mask="url(#b)"><circle cx="90" cy="90" r="90" transform="translate(-80 -80)"></circle></g>
-                                                                </g>
-                                                            </svg>
-                                                        </button>
-                                                    </td>
-                                                </tr>
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                </li>
                             </ul>
+                        </div>
+                    </div>
+
+                    <div>
+                        <div class="search" id="div-search" style="margin-right:20px">
+                            <table>
+                                <tbody>
+                                    <tr>
+                                        <td>
+                                            <input type="text" placeholder="检索 Vision" name="" id="" value="">
+                                        </td>
+                                        <td>
+                                            <button>
+                                                <svg xmlns="http://www.w3.org/2000/svg"
+                                                     xmlns:xlink="http://www.w3.org/1999/xlink"
+                                                     width="16" height="16">
+                                                    <defs>
+                                                        <path id="a" d="M9 .5a8.5 8.5 0 017.027 13.285l3.508 3.509c.13.13.13.341 0 .471l-1.084 1.085a.333.333 0 01-.471 0l-3.42-3.42A8.5 8.5 0 119 .5zm0 2.1a6.4 6.4 0 100 12.8A6.4 6.4 0 009 2.6z"></path>
+                                                    </defs>
+                                                    <g fill="none" fill-rule="evenodd" transform="scale(0.75,0.75)">
+                                                        <mask id="b" fill="#fff"><use xlink:href="#a"></use></mask>
+                                                        <g fill="#BFBFBF" mask="url(#b)"><circle cx="90" cy="90" r="90" transform="translate(-80 -80)"></circle></g>
+                                                    </g>
+                                                </svg>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 </nav>
@@ -377,9 +402,22 @@
 
     <div class="container">
         <div onclick="nav_clearall()" style="margin-top:100px" class="main">
-            <div id="content">
-                @RenderBody()
-            </div>
+            <table class="table-main">
+                <tbody>
+                    <tr>
+                        <td class="page-content">
+                            <div id="content">
+                                @RenderBody()
+                            </div>
+                        </td>
+                        <td class="page-panel" valign="top">
+                            <div class="side">
+                                @RenderSection("side", false)
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
         </div>
 
         <footer class="border-top footer text-muted">
@@ -400,12 +438,22 @@
             var search = document.getElementById("div-search");
 
             var dHeight = 0;
-            if (document.documentElement.scrollTop < 90) dHeight = (document.documentElement.scrollTop / 2);
-            else dHeight = 45;
+            if (document.documentElement.scrollTop < 90) dHeight = (document.documentElement.scrollTop / 3);
+            else dHeight = 30;
             gnv.style.height = (80 - dHeight) + "px";
             search.style.marginTop = (((80 - dHeight) - 30) / 2) + "px";
         }
         shrink();
+
+        $(function () {
+            $('a').click(function () {
+                $('html,body').animate({ scrollTop: ($($(this).attr('href')).offset().top - 110) }, 1000);
+                var target = $($(this).attr('href'));
+                target[0].style.background = "#a900ff26";
+                setTimeout(function () { target[0].style.background = "transparent"; }, 3500);
+            });
+        });
     </script>
+
 </body>
 </html>

@@ -313,8 +313,6 @@ namespace Vision.Markup.Ast {
                         if (!string.IsNullOrWhiteSpace(temp_text)) {
                             if (temp_text.Trim().StartsWith("("))
                                 child.Add(ArrayData.Parse(temp_text));
-                            else if (temp_text.Contains(":"))
-                                child.Add(ElementSection.Parse(elembody, elemname));
                             else child.Add(DataSection.Parse(temp_text));
                             temp_text = "";
                         }

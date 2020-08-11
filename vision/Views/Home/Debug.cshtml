@@ -55,14 +55,31 @@
         </tbody>
     </table>
 </form>
-<br/>
-<hr/>
+<br />
+<hr />
 
+<h2>Available Pages</h2>
+@foreach (var item in Model) {
+    @if (item.Namespace != "Deleted" && item.Namespace != "DeletedTalk") {
+        @if (string.IsNullOrWhiteSpace(item.Namespace)) {
+            <div>
+                <h4>Id: <code>@item.Id</code> | Page: <a href="~/Home/Page/@item.Title.Replace(" ", "%20")">@item.Title</a></h4>
+            </div>
+        } else {
+            <div>
+                <h4>Namespace: <code>@item.Namespace</code> | Id: <code>@item.Id</code> | Page: <a href="~/Home/Page/@item.Namespace:@item.Title.Replace(" ", "%20")">@item.Title</a></h4>
+            </div>
+        }
+    }
+}
 
-@foreach(var item in Model) {
-    <div>
-        <h4>Id: <code>@item.Id</code> | Page: <a href="~/Home/Page/@item.Title.Replace(" ","%20")">@item.Title</a></h4>
-    </div>
+<h2>Deleted Pages</h2>
+@foreach (var item in Model) {
+    @if (item.Namespace == "Deleted" || item.Namespace == "DeletedTalk") {
+        <div>
+            <h4>Id: <code>@item.Id</code> | Page: <a href="~/Home/Page/@item.Title.Replace(" ", "%20")">@item.Title</a></h4>
+        </div>
+    }
 }
 
 <div class="placeholder"></div>

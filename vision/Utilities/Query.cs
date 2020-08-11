@@ -4,6 +4,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Vision.Data;
+using Vision.Models;
 
 namespace Vision.Utilities {
 
@@ -61,6 +63,22 @@ namespace Vision.Utilities {
                            select rec;
             var result_rec = q_record.FirstOrDefault();
             return (true, result, result_rec);
+        }
+
+        public static User GetUserById(UserContext ctx, int id) {
+            var query = from user in ctx.User
+                        where user.Id == id
+                        select user;
+            var result = query.FirstOrDefault();
+            return result;
+        }
+
+        public static User GetUserByName(UserContext ctx, string name) {
+            var query = from user in ctx.User
+                        where user.Display == name
+                        select user;
+            var result = query.FirstOrDefault();
+            return result;
         }
     }
 }
