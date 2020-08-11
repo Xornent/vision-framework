@@ -13,7 +13,7 @@ a c-sharp based online collaborative writing system
 # snapshots
 
 * snapshot for v0.6.0
-!(v0.6.0)[github/images/vision-0.6.0-1.png]
+!(v0.6.0)[/github/images/vision-0.6.0-1.png]
 
 # release notes
 
