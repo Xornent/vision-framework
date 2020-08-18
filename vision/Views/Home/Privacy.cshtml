@@ -1,5 +1,6 @@
 ﻿@{
     ViewData["Title"] = "隐私政策";
+    ViewData["Side"] = false;
 }
 
 <h1>@ViewData["Title"]</h1>
@@ -135,19 +136,3 @@
 <p>除了密码之外，你的信息将随所有公开的内容明文储存，直到公开内容被一并销毁。</p>
 
 <div class="placeholder"><p>&nbsp;</p></div>
-
-@section side {
-    <h3>本页面的归档</h3>
-    <table class="box-Current plainlinks metadata ambox ambox-notice">
-        <tbody>
-            <tr>
-                <td class="mbox-image">
-                    <div style="width: 52px; margin-left: 10px;"><img src="~/images/page-markers/info.png" alt="" width="48" data-file-width="48" data-file-height="48" /></div>
-                </td>
-                <td class="mbox-text">
-                    <div class="mbox-text-span">本文和本项目所有页面的文本内容签署在 <a>GNU Free Documentation License 1.3</a> 下</div>
-                </td>
-            </tr>
-        </tbody>
-    </table>
-} 

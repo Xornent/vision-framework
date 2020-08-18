@@ -344,10 +344,15 @@ G:\Github\source\xornent\projects\vision-framework\vision\obj\Debug\netcoreapp3.
 G:\Github\source\xornent\projects\vision-framework\vision\obj\Debug\netcoreapp3.1\Vision.dll
 G:\Github\source\xornent\projects\vision-framework\vision\obj\Debug\netcoreapp3.1\Vision.pdb
 G:\Github\source\xornent\projects\vision-framework\vision\obj\Debug\netcoreapp3.1\Vision.genruntimeconfig.cache
-G:\Github\source\xornent\projects\vision-framework\vision\obj\Debug\netcoreapp3.1\Vision.csproj.CoreCompileInputs.cache
-G:\Github\source\xornent\projects\vision-framework\vision\obj\Debug\netcoreapp3.1\Vision.MvcApplicationPartsAssemblyInfo.cache
 G:\Github\source\xornent\projects\vision-framework\vision\bin\Debug\netcoreapp3.1\Properties\serviceDependencies.json
 G:\Github\source\xornent\projects\vision-framework\vision\bin\Debug\netcoreapp3.1\Properties\serviceDependencies.local.json
 G:\Github\source\xornent\projects\vision-framework\vision\obj\Debug\netcoreapp3.1\Razor\Views\Account\Login.cshtml.g.cs
 G:\Github\source\xornent\projects\vision-framework\vision\obj\Debug\netcoreapp3.1\Razor\Views\Account\Logout.cshtml.g.cs
 G:\Github\source\xornent\projects\vision-framework\vision\obj\Debug\netcoreapp3.1\Razor\Views\Account\Register.cshtml.g.cs
+G:\Github\source\xornent\projects\vision-framework\vision\obj\Debug\netcoreapp3.1\Razor\Views\Home\CreateCategory.cshtml.g.cs
+G:\Github\source\xornent\projects\vision-framework\vision\obj\Debug\netcoreapp3.1\Razor\Views\Home\Portal.cshtml.g.cs
+G:\Github\source\xornent\projects\vision-framework\vision\obj\Debug\netcoreapp3.1\Razor\Views\Account\Profile.cshtml.g.cs
+G:\Github\source\xornent\projects\vision-framework\vision\obj\Debug\netcoreapp3.1\Razor\Views\Home\EditCategory.cshtml.g.cs
+G:\Github\source\xornent\projects\vision-framework\vision\bin\Debug\netcoreapp3.1\PinYinConverterCore.dll
+G:\Github\source\xornent\projects\vision-framework\vision\obj\Debug\netcoreapp3.1\Vision.csproj.CoreCompileInputs.cache
+G:\Github\source\xornent\projects\vision-framework\vision\obj\Debug\netcoreapp3.1\Vision.MvcApplicationPartsAssemblyInfo.cache

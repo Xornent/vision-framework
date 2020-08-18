@@ -1,0 +1,188 @@
+﻿@model Category
+@{
+    ViewData["Title"] = "编辑分类门户";
+    ViewData["Side"] = false;
+}
+
+<h1>编辑分类门户：@Model.Name</h1>
+
+<div id="monaco-div" style="width: 100%;height: 450px; margin-top: 15px; margin-bottom:15px">
+</div>
+
+<form asp-action="EditCategory">
+    <input style="display:none" name="id" id="id-id" value="@Model.Id"/>
+    <textarea style="display:none" name="alias" id="id-alias">@Model.AliasBody</textarea>
+    <input type="submit" value="提交对页面的更改" style="width:180px; height:30px; margin-top:20px;" onclick="return loadup()" />
+</form>
+
+<script src="~/editor/min/vs/loader.js"></script>
+<script>
+
+    var meditor = null;
+
+    // Language Services
+    require.config({ paths: { 'vs': '../../editor/min/vs' } });
+    require(['vs/editor/editor.main'], function () {
+
+        // Register a new language
+        monaco.languages.register({ id: 'vmkup' });
+
+        // Register a tokens provider for the language
+        monaco.languages.setMonarchTokensProvider('vmkup', {
+            tokenizer: {
+                root: [
+                    [/\{\{\{[^)]*?\}\}\}/gm, "ref"],
+                    [/\{\{[^)]*?\}\}/gm, "note"],
+                    [/\[\[[^)]*?\]\]/gm, "link"],
+                    [/\{\[[^)]*?\]\}/gm, "gallery"],
+                    [/%%[^)]*?%%/gm, "quote"],
+                    [/\^\^[^)]*?\^\^/gm, "code"],
+                    [/'''''[^)]*?'''''/gm, "ib"],
+                    [/'''[^)]*?'''/gm, "i"],
+                    [/''[^)]*?''/gm, "b"],
+                    [/^###*[^)]*/gm, "h"],
+                    [/\([^)]*?:/gm, "template"],
+                    [/\$\[[^)]*?\]/gm, "byval"],
+                    [/\@(new Microsoft.AspNetCore.Html.HtmlString("@"))\{[^)]*?\}/gm, "var"],
+                    //[/^:*\**:*\**:*\**:*\**:*\**:*\**:*/gm, "list"],
+                    //[/^```[^)]*/gm, "section"]]
+                    ]
+            }
+        });
+
+        // Define a new theme that contains only rules that match this language
+        monaco.editor.defineTheme('vmkupTheme', {
+            base: 'vs',
+            inherit: false,
+            rules: [
+                { token: 'h', foreground: 'b300d4', fontStyle: 'bold' },
+                { token: 'b', foreground: '000000', fontStyle: 'bold' },
+                { token: 'i', foreground: '000000', fontStyle: 'italic' },
+                { token: 'ib', foreground: '000000', fontStyle: 'bolditalic' },
+                { token: 'template', foreground: '1857b5' },
+                { token: 'byval', foreground: '179800' },
+                { token: 'var', foreground: 'ff0000' },
+                { token: 'list', foreground: 'd36aff' },
+                //{ token: 'section', foreground: '00bec7' },
+                { token: 'ref', foreground: '218c55' },
+                { token: 'note', foreground: '548c21' },
+                { token: 'link', foreground: '007eff' },
+                { token: 'gallery', foreground: '007eff' },
+                { token: 'quote', foreground: '696969' },
+                { token: 'code', foreground: '696969' },
+                //{ token: 'preprocessor', foreground: 'ff66a6' }
+            ]
+        });
+
+        // Register a completion item provider for the new language
+        monaco.languages.registerCompletionItemProvider('vmkup', {
+            provideCompletionItems: () => {
+                var suggestions = [{
+                    label: 'if:',
+                    kind: monaco.languages.CompletionItemKind.Snippet,
+                    insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+                    insertText: 'if: (evaluation: ${1:variable})\n' +
+                        '     (content: ${2:if evaluation is true ...} )\n' +
+                        '     (otherwise: ${3}))'
+                }, {
+                        label: 'for:',
+                        kind: monaco.languages.CompletionItemKind.Snippet,
+                        insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+                        insertText: 'for: (define: ${1:loop variable})\n' +
+                            '      (from: ${2}) (to: ${3}) (step: ${4})\n' +
+                            '      (content: ${3}))'
+                    }, {
+                        label: 'template:',
+                        kind: monaco.languages.CompletionItemKind.Snippet,
+                        insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+                        insertText: 'template: (name: ${1})\n' +
+                                    '           (content: ${2:to replace the template ...}))'
+                    }, {
+                        label: 'set:',
+                        kind: monaco.languages.CompletionItemKind.Snippet,
+                        insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+                        insertText: 'set: (variable: ${1})\n' +
+                                    '      (value: ${2}))'
+                    }, {
+                        label: 'toc:',
+                        kind: monaco.languages.CompletionItemKind.Snippet,
+                        insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+                        insertText: 'toc:)'
+                    }, {
+                        label: 'referencelist:',
+                        kind: monaco.languages.CompletionItemKind.Snippet,
+                        insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+                        insertText: 'referencelist:)'
+                    }, {
+                        label: '(externallist:',
+                        kind: monaco.languages.CompletionItemKind.Snippet,
+                        insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+                        insertText: '(externallist:)'
+                    }, {
+                        label: 'footnotelist:',
+                        kind: monaco.languages.CompletionItemKind.Snippet,
+                        insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+                        insertText: 'footnotelist:)'
+                    }, {
+                        label: 'sign:',
+                        kind: monaco.languages.CompletionItemKind.Snippet,
+                        insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+                        insertText: 'sign:)'
+                    }, {
+                        label: 'break:',
+                        kind: monaco.languages.CompletionItemKind.Snippet,
+                        insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+                        insertText: 'break:)'
+                    }, {
+                        label: 'model:',
+                        kind: monaco.languages.CompletionItemKind.Snippet,
+                        insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+                        insertText: 'model: (name: ${1})\n' +
+                                    '        (content: ${2}))'
+                    }
+                    @foreach(var templs in Vision.Markup.Templating.TemplateRegistry.Parameters) {
+                        @(new Microsoft.AspNetCore.Html.HtmlString(", {"))
+                        @(new Microsoft.AspNetCore.Html.HtmlString("label: '"+templs.Key+"',"))
+                        @(new Microsoft.AspNetCore.Html.HtmlString("kind: monaco.languages.CompletionItemKind.Snippet,"))
+                        @(new Microsoft.AspNetCore.Html.HtmlString("insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,"))
+                        string s = "insertText: '" + templs.Key + ": ";
+                        int i = 1;
+                        foreach(string par in templs.Value) {
+                            s = s + "(" + par.Trim() + ": ${" + i + "})\\n";
+                            s = s + Vision.Utilities.Encoding.GetSpaces(templs.Key.Length + 3);
+                            i++;
+                        }
+                        s = s.TrimEnd() + ")'";
+                        @(new Microsoft.AspNetCore.Html.HtmlString(s))
+                        @(new Microsoft.AspNetCore.Html.HtmlString("}"))
+                    }
+                ];
+                return { suggestions: suggestions };
+            }
+        });
+
+        // import * as monaco from '../editor/esm/vs/editor/editor.api.js';
+        meditor = monaco.editor.create(document.getElementById("monaco-div"), {
+            value: "@Html.Raw(Model.AliasBody.Replace("\r", @"\r").Replace("\t", @"\t").Replace("\n", @"\n").Replace("\"",@"\"+"\""))",
+            language: "vmkup",
+
+            lineNumbers: "on",
+            roundedSelection: false,
+            scrollBeyondLastLine: true,
+            readOnly: false,
+            theme: "vmkupTheme",
+        });
+    });
+
+    function loadup() {
+        try {
+            var ibd = document.getElementById("id-alias");
+            var str = meditor.getValue();
+            ibd.value = str;
+            return true;
+        } catch (ex) { return false; }
+    }
+
+    setTimeout(loadup, 800);
+    meditor.layout();
+</script>

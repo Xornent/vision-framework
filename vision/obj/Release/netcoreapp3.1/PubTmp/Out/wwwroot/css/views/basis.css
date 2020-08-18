@@ -1,7 +1,91 @@
 ﻿.main {
-    width:80%;
-    margin-left:10%;
-    margin-right:10%
+    width:100%;
+}
+
+.mbox-text {
+    padding: 6px;
+}
+
+@media screen and (min-width: 1230px) {
+    .table-main {
+        margin-left: 10%;
+        width: 85%;
+        margin-right: 5%
+    }
+
+    .page-content {
+        width: 70%;
+    }
+
+    .page-panel {
+        width: 30%;
+    }
+
+    .side {
+        margin-top: 50px;
+        margin-left: 40px;
+    }
+
+    .mbox-image {
+        display: normal;
+    }
+}
+
+@media screen and (max-width: 1230px) {
+    .table-main {
+        margin-left: 10%;
+        width: 85%;
+        margin-right: 5%
+    }
+
+    .page-content {
+        width: 70%;
+    }
+
+    .page-panel {
+        width: 30%;
+    }
+
+    .side {
+        margin-top: 50px;
+        margin-left: 40px;
+    }
+
+    .mbox-image {
+        display: none;
+    }
+}
+
+@media screen and (max-width: 1150px) {
+    .table-main {
+        margin-left: 10%;
+        width: 80%;
+        margin-right: 10%
+    }
+
+    .page-content {
+        width: 100%
+    }
+
+    .page-panel {
+        display: none;
+    }
+}
+
+@media screen and (max-width: 740px) {
+    .nav-menu-wrapper {
+        display: none !important;
+    }
+}
+
+@media screen and (min-width: 740px) {
+    .nav-menu-wrapper {
+        display: normal;
+    }
+}
+
+#content {
+    line-height: 1.5em;
 }
 
 .main h1, .main h2, .main h3 {
@@ -9,35 +93,62 @@
 }
 
     .main h4, .main h5 {
-        font-family: -apple-system, "PingFang SC", sans-serif;
+        font-family:Georgia, SimSun, serif;
     }
 
 h1 {
     padding-top:40px;
     padding-bottom: 20px;
     font-size:2.5em;
+    line-height:2.5em;
 }
 
 h2 {
-    padding-top: 10px;
-    padding-bottom: 8px;
+    padding-top: 1em;
+    margin-bottom: 1em;
+    padding-bottom: 0.2em;
     font-size: 1.5em;
+    line-height:1.5em;
+    border-bottom: 1px solid #00000042;
 }
 
-h3, h4{
-    padding-top: 5px;
-    padding-bottom: 5px;
-    font-size:1.2em;
+h3, h4 {
+    padding-top: 0.8em;
+    padding-bottom: 0.5em;
+}
+
+h3 {
+    font-size: 1.2em;
+    line-height: 1.2em;
+}
+
+h4 {
+    font-size: 1.1em;
+    line-height: 1.1em;
 }
 
 h5 {
-    padding-top:5px;
-    padding-bottom:5px;
+    padding-top: 0.5em;
+    padding-bottom: 0.5em;
     font-size: 1em;
 }
 
 h1, h2, h3, h4, h5 {
+    overflow: hidden;
     font-weight: 900;
+}
+
+hr {
+    margin: 0 auto;
+    border: 0;
+    height: 1px;
+    background-image: linear-gradient(to right, rgb(0 0 0 / 24%), rgba(0, 0, 0, 0.75), rgb(0 0 0 / 15%));
+}
+
+#content ul, #content ol {
+    margin-left: 40px;
+    margin-top: 10px;
+    margin-bottom: 10px;
 }
 
 .search {
@@ -103,33 +214,6 @@ input[type="submit"] {
     border: none;
     font-family: inherit;
 }
-    /*
-form input[type='text'] {
-    font-family: georgia,"pingfang sc",-serif;
-    font-weight: 900;
-    height: 28px;
-    border: 3px solid #e8e8e8;
-    border-radius: 3px;
-    background: #fafafa;
-    margin-left: 6px;
-    outline: none;
-    box-shadow: 0px 0px 0px #00b7ff;
-    padding: 0px 10px;
-}
-
-form input[type='text']:focus {
-    font-family: georgia,"pingfang sc",-serif;
-    font-weight: 900;
-    height: 28px;
-    border: 3px solid #008fff;
-    border-radius: 3px;
-    background: #fafafa;
-    margin-left: 6px;
-    outline: none;
-    box-shadow: 0px 0px 4px #00b7ff;
-    padding: 0px 10px;
-}
-*/
 
 label {
     display: inline-block;
@@ -175,7 +259,6 @@ button, input, select, textarea {
 
 .bootstrap-tagsinput {
     background-color: #fff;
-    border: 1px solid #ccc;
     box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075);
     display: inline-block;
     padding: 4px 6px;
@@ -188,15 +271,35 @@ button, input, select, textarea {
 }
 
     .bootstrap-tagsinput input {
-        border: none;
-        box-shadow: none;
-        outline: none;
-        background-color: transparent;
-        padding: 0 6px;
-        margin: 0;
-        width: auto;
-        max-width: inherit;
+        margin: 5px 5px;
+        display: block;
+        width: 200px;
+        height: 28px;
+        padding: 0px 10px;
+        font-size: 14px;
+        line-height: 1.42857143;
+        color: #555;
+        background-color: #fff;
+        background-image: none;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        -webkit-box-shadow: inset 0 1px 1px rgba(0,0,0,.075);
+        box-shadow: inset 0 1px 1px rgba(0,0,0,.075);
+        -webkit-transition: border-color ease-in-out .15s,box-shadow ease-in-out .15s;
+        -o-transition: border-color ease-in-out .15s,box-shadow ease-in-out .15s;
+        -webkit-transition: border-color ease-in-out .15s,-webkit-box-shadow ease-in-out .15s;
+        transition: border-color ease-in-out .15s,-webkit-box-shadow ease-in-out .15s;
+        transition: border-color ease-in-out .15s,box-shadow ease-in-out .15s;
+        transition: border-color ease-in-out .15s,box-shadow ease-in-out .15s,-webkit-box-shadow ease-in-out .15s;
     }
+
+        .bootstrap-tagsinput input[type="text"]:focus {
+            /* color: black; */
+            border-color: #66afe9;
+            outline: 0;
+            -webkit-box-shadow: inset 0 1px 1px rgba(0,0,0,.075), 0 0 8px rgba(102,175,233,.6);
+            box-shadow: inset 0 1px 1px rgba(0,0,0,.075), 0 0 8px rgba(102,175,233,.6);
+        }
 
     .bootstrap-tagsinput.form-control input::-moz-placeholder {
         color: #777;
@@ -212,7 +315,6 @@ button, input, select, textarea {
     }
 
     .bootstrap-tagsinput input:focus {
-        border: none;
         box-shadow: none;
     }
 
@@ -257,18 +359,23 @@ button, input, optgroup, select, textarea {
     }
 
 .bootstrap-tagsinput .label-info {
-    border-radius: 4px;
-    background-color: #1abc9c;
-    color: #fff;
+    border-radius: 100px;
+    background-color: #efefef;
+    color: #000;
     font-size: 13px;
     cursor: pointer;
     display: inline-block;
     position: relative;
     vertical-align: middle;
     overflow: hidden;
-    margin: 0;
-    padding: 1px 8px 2px 6px;
+    padding: 1px 8px 2px 10px;
     transition: .25s linear;
+    box-shadow: 0.4px 0.4px 3px #a0a0a0;
+    margin: 5px 1px;
+}
+
+span.tag.label.label-info:hover {
+    background-color: #e0e0e0;
 }
 
 .btn {
@@ -278,4 +385,176 @@ button, input, optgroup, select, textarea {
     padding: 10px;
     border-radius: 5px;
     margin-top: 10px;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+}
+
+html, body {
+    height: 100%;
+}
+
+.container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+header {
+    flex: 0 0 auto;
+}
+
+.main {
+    flex: 1 0 auto;
+}
+
+footer {
+    background: #333;
+    color: whitesmoke;
+    font-size:0.8em;
+    flex: 0 0 auto;
+}
+
+.footer-container {
+    margin: 20px;
+}
+
+.footer-container a {
+    text-decoration:none;
+    color:lightskyblue;
+    transition: color linear 0.5s;
+}
+
+.footer-container a:hover {
+    color:aqua;
+}
+
+a {
+    color:Highlight;
+    text-decoration:none;
+    transition: color linear 0.3s;
+    font-weight: 700;
+}
+
+    a:hover {
+        color: #0b0080 !important;
+    }
+
+code {
+    font-family:Consolas;
+}
+
+form table tr {
+    min-width:200px;
+}
+
+form input, form select {
+    margin: 5px 5px;
+    display: block;
+    width: 200px;
+    height: 28px;
+    padding: 0px 10px;
+    font-size: 14px;
+    line-height: 1.42857143;
+    color: #555;
+    background-color: #fff;
+    background-image: none;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    -webkit-box-shadow: inset 0 1px 1px rgba(0,0,0,.075);
+    box-shadow: inset 0 1px 1px rgba(0,0,0,.075);
+    -webkit-transition: border-color ease-in-out .15s,box-shadow ease-in-out .15s;
+    -o-transition: border-color ease-in-out .15s,box-shadow ease-in-out .15s;
+    -webkit-transition: border-color ease-in-out .15s,-webkit-box-shadow ease-in-out .15s;
+    transition: border-color ease-in-out .15s,-webkit-box-shadow ease-in-out .15s;
+    transition: border-color ease-in-out .15s,box-shadow ease-in-out .15s;
+    transition: border-color ease-in-out .15s,box-shadow ease-in-out .15s,-webkit-box-shadow ease-in-out .15s;
+    margin-left: 10px;
+}
+
+    form input:focus, form select:focus {
+        border-color: #66afe9;
+        outline: 0;
+        -webkit-box-shadow: inset 0 1px 1px rgba(0,0,0,.075), 0 0 8px rgba(102,175,233,.6);
+        box-shadow: inset 0 1px 1px rgba(0,0,0,.075), 0 0 8px rgba(102,175,233,.6);
+    }
+
+p {
+
+}
+
+.placeholder {
+    margin: 30px;
+    content: ' ';
+}
+
+
+table.ombox-notice {
+    border: 1px solid #a2a9b1;
+}
+
+table.ombox {
+    margin: 4px 10%;
+    border-collapse: collapse;
+    border: 1px solid #a2a9b1;
+    background-color: #f8f9fa;
+    box-sizing: border-box;
+}
+
+table {
+    display: table;
+    border-collapse: separate;
+    border-spacing: 2px;
+    border-color: grey;
+}
+
+    table.ambox-notice {
+        border-left: 10px solid #36c;
+    }
+
+    table.ambox-warning {
+        border-left: 10px solid rgb(192, 157, 0);
+    }
+
+    table.ambox-warningsevere {
+        border-left: 10px solid rgb(207, 100, 0);
+    }
+
+    table.ambox-severe {
+        border-left: 10px solid rgb(204, 51, 51);
+    }
+
+    table.ambox {
+        margin: 0;
+        background-color: #fbfbfb;
+        box-sizing: border-box;
+        box-shadow: -1px 1px 3px 0px #cecece;
+        border-radius: 3px;
+        margin-top: 15px;
+        font-size: 0.8em;
+        font-family: Georgia, SimSun, serif;
+    }
+
+code {
+    font-family: consolas, SimSun, monospace !important;
+}
+
+.side li {
+    margin-bottom: 6px;
+}
+
+.side p {
+    font-size: 0.9em;
+}
+
+.side ul,
+.side ol {
+    font-size: 0.8em;
+    margin-left: 15px;
+}
+
+.side{
+    margin-bottom: 50px;
 }

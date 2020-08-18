@@ -1,0 +1,34 @@
+﻿@model Vision.Models.Category
+
+@{
+    ViewData["Title"] = "新建类别";
+    ViewData["Side"] = false;
+}
+
+<h1>新建类别</h1>
+
+<div class="row" style="margin-top:40px">
+    <div class="col-md-4">
+        <form asp-action="CreateCategory">
+            <div asp-validation-summary="ModelOnly" class="text-danger" style="display:none"></div>
+            <div class="form-group">
+                <label asp-for="Name" class="control-label"></label>
+                <input asp-for="Name" id="title" class="form-control" />
+                <span asp-validation-for="Name" class="text-danger"></span>
+            </div>
+            <input asp-for="Pages" id="" class="form-control" style="display:none;" />
+            <input asp-for="Alias" id="" class="form-control" style="display:none;" />
+            <div class="form-group">
+                <input type="submit" value="    创建类别    " class="btn btn-primary" />
+            </div>
+        </form>
+    </div>
+</div>
+
+<div>
+    <a asp-action="Index">回到首页</a>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

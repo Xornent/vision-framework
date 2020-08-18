@@ -399,8 +399,9 @@ namespace Vision.Markup {
 
             // 使用 <novml> ... </novml> 可以使部分内容直接以原文显示，
             // 这不同于一般的 HTML 标签。
-            string pattern = @"<novml>(.*?)</novml>";
-            markup = markup.Replace("\n", "$${break-n}");
+
+            string pattern = @"<novml>[\s\S\n\t\r]*?</novml>";
+            markup = markup.Replace("\n", "$<break-n>");
             Dictionary<Guid, string> replacer = new Dictionary<Guid, string>();
             while (Regex.IsMatch(markup, pattern)) {
                 markup = Regex.Replace(markup, pattern, (match) => {
@@ -409,15 +410,53 @@ namespace Vision.Markup {
                     return "$$:::" + guid.ToString().ToUpper() + ":::";
                 });
             }
-            markup = markup.Replace("$${break-n}", "\n");
-            MarkupDocument doc = Parse(markup.Replace("`(", "$${br-left}").Replace("`)","$${br-right}"));
+            markup = markup.Replace("$<break-n>", "\n");
+            MarkupDocument doc = Parse(markup.Replace("`(", "$<br-left>").Replace("`)","$<br-right>"));
             doc.Execute(page, record, user, ns, ctxpage, ctxuser);
-            string s = doc.ToString().Replace("$${br-left}","(").Replace("$${br-right}",")");
+            string s = doc.ToString().Replace("$<br-left>","(").Replace("$<br-right>",")");
             foreach (var item in replacer) {
-                s = s.Replace("$$:::" + item.Key.ToString().ToUpper() + ":::", item.Value.Replace("$${break-n}", "\n"));
+                s = s.Replace("$$:::" + item.Key.ToString().ToUpper() + ":::", item.Value.Replace("$<break-n>", "\n"));
             }
 
             return (s, doc);
+        }
+
+        public (string Page, MarkupDocument Document) FromSource(string markup, PageContext ctxpage, UserContext ctxuser) {
+            string pattern = @"<novml>[\s\S\n\t\r]*?</novml>";
+            markup = markup.Replace("\n", "$<break-n>");
+            Dictionary<Guid, string> replacer = new Dictionary<Guid, string>();
+            while (Regex.IsMatch(markup, pattern)) {
+                markup = Regex.Replace(markup, pattern, (match) => {
+                    Guid guid = Guid.NewGuid();
+                    replacer.Add(guid, match.Value.Remove(0, 7).Remove(match.Value.Length - 15, 8));
+                    return "$$:::" + guid.ToString().ToUpper() + ":::";
+                });
+            }
+            markup = markup.Replace("$<break-n>", "\n");
+            MarkupDocument doc = Parse(markup.Replace("`(", "$<br-left>").Replace("`)", "$<br-right>"));
+            doc.Execute(ctxpage, ctxuser);
+            string s = doc.ToString().Replace("$<br-left>", "(").Replace("$<br-right>", ")");
+            foreach (var item in replacer) {
+                s = s.Replace("$$:::" + item.Key.ToString().ToUpper() + ":::", item.Value.Replace("$<break-n>", "\n"));
+            }
+
+            return (s, doc);
+        }
+
+        public MarkupDocument NotExecuteFromSource(string markup) {
+            string pattern = @"<novml>[\s\S\n\t\r]*?</novml>";
+            markup = markup.Replace("\n", "$${break-n}");
+            Dictionary<Guid, string> replacer = new Dictionary<Guid, string>();
+            while (Regex.IsMatch(markup, pattern)) {
+                markup = Regex.Replace(markup, pattern, (match) => {
+                    Guid guid = Guid.NewGuid();
+                    replacer.Add(guid, match.Value.Remove(0, 7).Remove(match.Value.Length - 15, 8));
+                    return "$$:::" + guid.ToString().ToUpper() + ":::";
+                });
+            }
+            markup = markup.Replace("$${break-n}", "\n");
+            MarkupDocument doc = Parse(markup.Replace("`(", "$${br-left}").Replace("`)", "$${br-right}"));
+            return doc;
         }
 
         public MarkupDocument Parse(string markup) {
@@ -552,7 +591,8 @@ namespace Vision.Markup {
                     }
                 }
 
-                raw = raw + "" + trimmed.Replace("\t", "").Replace("\n", "");
+                if (enabled)
+                    raw = raw + "" + trimmed.Replace("\t", "").Replace("\n", "");
             }
 
             if(!string.IsNullOrWhiteSpace(raw)) {
@@ -602,13 +642,27 @@ namespace Vision.Markup {
             // 它等价于元素 image
             // 使用 VML 标准模板 image 有： (image: (redirect: ...) (alt: ...) (message: ...) (oriention: ...))
 
+            markup = Regex.Replace(markup, @"'''''([\s\S\n\t\r]*?)'''''", (match) => {
+                string val = match.Value.Remove(0, 5).Remove(match.Value.Length - 10, 5).Replace("\n", "");
+                return "<b><i>" + val + "</i></b>";
+            }, RegexOptions.IgnoreCase | RegexOptions.Multiline);
+            markup = Regex.Replace(markup, @"'''([\s\S\n\t\r]*?)'''", (match) => {
+                string val = match.Value.Remove(0, 3).Remove(match.Value.Length - 6, 3).Replace("\n", "");
+                return "<i>" + val + "</i>";
+            }, RegexOptions.IgnoreCase | RegexOptions.Multiline);
+            markup = Regex.Replace(markup, @"''([\s\S\n\t\r]*?)''", (match) => {
+                string val = match.Value.Remove(0, 2).Remove(match.Value.Length - 4, 2).Replace("\n", "");
+                return "<b>" + val + "</b>";
+            }, RegexOptions.IgnoreCase | RegexOptions.Multiline);
 
             string[] urls = Startup.WebRoot.Split(";");
-            markup = Regex.Replace(markup, @"\[\[(.*?)\]\]", (match) => {
-                string val = match.Value.Remove(0, 2).Remove(match.Value.Length - 4, 2);
+            markup = Regex.Replace(markup, @"\[\[([\s\S\n\t\r]*?)\]\]", (match) => {
+                string val = match.Value.Remove(0, 2).Remove(match.Value.Length - 4, 2).Replace("\n", "");
+                val = Regex.Replace(val, @" +", " ");
+                val = val.Replace(": ", ":").Replace(" :", ":").Replace(" : ", ":");
 
                 if (val.StartsWith("I:") || val.StartsWith("i:")) {
-                    string expr = val.Remove(0, 2).Trim();
+                    string expr = val.Remove(0, 2).Trim().Replace("\n","");
                     string[] sizing = expr.Split('#');
                     string elem = "(redirect: ~/images/page-markers/warning.png) (alt: Default Image) (message:) (oriention: middle)";
                     string size = "(width: auto) (height: auto)";
@@ -657,8 +711,8 @@ namespace Vision.Markup {
             // 它等价于元素 gallery
             // 使用 VML 标准模板 gallery 有： (gallery: (redirect: <array>) (alt: <array>) (message: ...) (width: ...) (height: ...) (oriention: ...))
 
-            markup = Regex.Replace(markup, @"{\[(.*?)\]}", (match) => {
-                string expr = match.Value.Remove(0, 2).Remove(match.Value.Length - 4, 2);
+            markup = Regex.Replace(markup, @"{\[([\s\S\n\t\r]*?)\]}", (match) => {
+                string expr = match.Value.Remove(0, 2).Remove(match.Value.Length - 4, 2).Replace("\n","");
                 string[] sizing = expr.Split('#');
                 string size = "(width: auto) (height: auto)";
                 List<string> array = sizing[0].Split('!').ToList();
@@ -685,16 +739,16 @@ namespace Vision.Markup {
             // 引文：     语法： %%quote%%
             //                   (quote: (content: ...))
 
-            markup = Regex.Replace(markup, @"%%(.*?)%%", (match) => {
-                string val = match.Value.Remove(0, 2).Remove(match.Value.Length - 4, 2);
+            markup = Regex.Replace(markup, @"%%([\s\S\n\t\r]*?)%%", (match) => {
+                string val = match.Value.Remove(0, 2).Remove(match.Value.Length - 4, 2).Replace("\n","");
                 return "(quote: (content: " + val + "))";
             }, RegexOptions.IgnoreCase | RegexOptions.Multiline);
 
             // 代码：     语法： ^^code^^
             //                   (code: (content: ...))
 
-            markup = Regex.Replace(markup, @"\^\^(.*?)\^\^", (match) => {
-                string val = match.Value.Remove(0, 2).Remove(match.Value.Length - 4, 2);
+            markup = Regex.Replace(markup, @"\^\^([\s\S\n\t\r]*?)\^\^", (match) => {
+                string val = match.Value.Remove(0, 2).Remove(match.Value.Length - 4, 2).Replace("\n","");
                 return "(code: (content: " + val + "))";
             }, RegexOptions.IgnoreCase | RegexOptions.Multiline);
 
@@ -702,8 +756,8 @@ namespace Vision.Markup {
             //                   {{{id|message}}}
             //                   (reference: (id: ...) (message: ...))
 
-            markup = Regex.Replace(markup, @"{{{(.*?)}}}", (match) => {
-                string val = match.Value.Remove(0, 3).Remove(match.Value.Length - 6, 3);
+            markup = Regex.Replace(markup, @"{{{([\s\S\n\t\r]*?)}}}", (match) => {
+                string val = match.Value.Remove(0, 3).Remove(match.Value.Length - 6, 3).Replace("\n","");
                 string mark = "";
                 string msg = "";
                 if (val.Contains("|")) {
@@ -721,8 +775,8 @@ namespace Vision.Markup {
             //                   {{id|message}}
             //                   (footnote: (id: ...) (message: ...))
 
-            markup = Regex.Replace(markup, @"{{(.*?)}}", (match) => {
-                string val = match.Value.Remove(0, 2).Remove(match.Value.Length - 4, 2);
+            markup = Regex.Replace(markup, @"{{([\s\S\n\t\r]*?)}}", (match) => {
+                string val = match.Value.Remove(0, 2).Remove(match.Value.Length - 4, 2).Replace("\n","");
                 if (val.Contains("|")) {
                     string[] param = val.Split('|');
                     string disp = ToRomanLower(int.Parse(param[0].Trim()));
@@ -737,13 +791,15 @@ namespace Vision.Markup {
             // 值得注意的是，由于列表在其他语法中的简化与 VML 标准语法的复杂度之间差异不大，在许多情况下甚至 VML 更简单
             // 我们不对表格进行特殊语法规定，而统一使用标准 VML 数组嵌套数组来表示二维表格：
 
-            // (table: (title: ...) (subtitle: ...) (row: ...) (column: ...)
+            // (table: (title: ...) (type: ...) (row: ...) (column: ...) (orient: <torient>)
             //         (description: ...) 
             //         (data: 
             //             (( (( 1-1 ) ( 1-2 ) ( 1-3 ) ( 1-4 ))
             //                (( 2-1 ) ( 2-2 ) ( 2-3 ) ( 2-4 ))
-            //                (( 34-123 #3,2 )    ()() ( 3-4 ))
-            //                (()()()                  ( 4-4 )) )) ) )
+            //                (( 34-123 #3,2 )         ( 3-4 ))
+            //                (                        ( 4-4 )) )) ) )
+
+            // <<< title ! subtitle ! 
 
             // 其中 #3,2 意味着本单元格横向吞并 3 格，纵向吞并 2 格
 

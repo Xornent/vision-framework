@@ -1,0 +1,36 @@
+﻿@model Category
+@{
+    ViewData["Title"] = "分类：" + Model.Name;
+    ViewData["Side"] = false;
+}
+
+@{ 
+    string evaluation = Model.Name;
+    if (Model.Name.Contains(":")) {
+        evaluation = evaluation.Split(':')[1];
+    }
+}
+<h1>分类：@evaluation</h1>
+
+@(new Microsoft.AspNetCore.Html.HtmlString(Model.AliasHtml))
+
+<form asp-action="CategoryPager">
+    <input type="text" value="@Model.Id" style="display:none;" name="id" />
+
+    <h2>子类别</h2>
+    <p>第 <input value="@Model.CurrentCategory" type="text" name="catpage" style="display:inline-block; width:50px" /> 页，共 @(Math.Ceiling(Model.SubCategoryList.Count/200f)) 页</p>
+    <ul class="portal-list">
+        @for (int i = (Model.CurrentCategory - 1) * 200; i < Math.Min(Model.SubCategoryList.Count, Model.CurrentCategory * 200); i++) {
+            @(new Microsoft.AspNetCore.Html.HtmlString(Model.SubCategoryList[i]));
+        }
+    </ul>
+
+    <h2>界面</h2>
+    <p>第 <input value="@Model.CurrentPage" type="text" name="pagepage" style="display:inline-block; width:50px" /> 页，共 @(Math.Ceiling(Model.PageList.Count/200f)) 页</p>
+    <ul class="portal-list">
+        @for (int i = (Model.CurrentPage - 1) * 200; i < Math.Min(Model.PageList.Count, Model.CurrentPage * 200); i++) {
+            @(new Microsoft.AspNetCore.Html.HtmlString(Model.PageList[i]));
+        }
+    </ul>
+    <input type="submit" value="  导航  " />
+</form>

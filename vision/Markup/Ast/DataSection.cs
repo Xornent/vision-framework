@@ -86,7 +86,8 @@ namespace Vision.Markup.Ast {
         {
             { "color", typeof(System.Drawing.KnownColor) },
             { "toggle", typeof(Toggle) },
-            { "orientionh", typeof(HorizontalOriention) }
+            { "orientionh", typeof(HorizontalOriention) },
+            { "toriention", typeof(TableOriention) }
         };
 
         public static bool Equal(DataSection variable, DataSection value) {

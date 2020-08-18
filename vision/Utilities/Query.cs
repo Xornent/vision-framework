@@ -80,5 +80,21 @@ namespace Vision.Utilities {
             var result = query.FirstOrDefault();
             return result;
         }
+
+        public static Category GetCategoryById(CategoryContext ctx, int id) {
+            var query = from user in ctx.Category
+                        where user.Id == id
+                        select user;
+            var result = query.FirstOrDefault();
+            return result;
+        }
+
+        public static Category GetCategoryByName(CategoryContext ctx, string name) {
+            var query = from user in ctx.Category
+                        where user.Name.ToLower() == name.ToLower()
+                        select user;
+            var result = query.FirstOrDefault();
+            return result;
+        }
     }
 }

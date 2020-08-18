@@ -47,14 +47,11 @@ namespace Vision.Controllers {
             await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme,
                 new ClaimsPrincipal(identity), new AuthenticationProperties
                 {
-                    IsPersistent = false,
+                    IsPersistent = true,
                     ExpiresUtc = DateTime.UtcNow.AddSeconds(600)
                 });
 
-            ViewData["AuthenticatedUser"] = true;
-            ViewData["AuthenticatedAdministrator"] = currentName.Level >= 4; 
-            ViewData["AuthenticatedUserName"] = currentName.Display;
-            return View("../Home/Index");
+            return Redirect("/Home/Index/");
         }
 
         public IActionResult Logout() {
@@ -69,22 +66,19 @@ namespace Vision.Controllers {
                 }
             }
             ViewData["Authenticated"] = "Not Logged In";
-            ViewData["AuthenticatedUser"] = false;
-            ViewData["AuthenticatedAdministrator"] = false;
-            ViewData["AuthenticatedUserName"] = "";
             return View();
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Logout(IFormCollection form) {
+        public async Task< IActionResult> Logout(IFormCollection form) {
             try {
                 await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
             } catch { }
             ViewData["AuthenticatedUser"] = false;
             ViewData["AuthenticatedAdministrator"] = false;
             ViewData["AuthenticatedUserName"] = "";
-            return View("../Home/Index");
+            return Redirect("/Home/Index/");
         }
 
         public IActionResult Register() {

@@ -15,10 +15,12 @@ function nav_clearall() {
     var start = document.getElementById("nav.explore");
     start.parentNode.setAttribute("class", "nav-menu-item has-submenu");
     start.setAttribute("aria-expanded", "false");
-
+    
     start = document.getElementById("nav.page");
-    start.parentNode.setAttribute("class", "nav-menu-item has-submenu");
-    start.setAttribute("aria-expanded", "false");
+    if (start != undefined) {
+        start.parentNode.setAttribute("class", "nav-menu-item has-submenu");
+        start.setAttribute("aria-expanded", "false");
+    }
 
     start = document.getElementById("nav.contrib");
     start.parentNode.setAttribute("class", "nav-menu-item has-submenu");
@@ -35,7 +37,8 @@ function nav_clearall() {
     var doc = document.getElementById("ul.explore");
     doc.style.left = 0;
     doc = document.getElementById("ul.page");
-    doc.style.left = 0;
+    if (doc != undefined)
+        doc.style.left = 0;
     doc = document.getElementById("ul.contrib");
     doc.style.left = 0;
     doc = document.getElementById("ul.user");

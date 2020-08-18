@@ -282,7 +282,7 @@
 .nav-active #primary.nav-wrapper {
     opacity: 1;
     overflow: visible;
-    box-shadow: 0px 0.5px 5px #5555;
+    box-shadow: 0px 0.5px 5px #bfbfbf;
 }
 
 #primary.nav-wrapper:nth-last-child(2) {

@@ -86,7 +86,15 @@ namespace Vision.Markup {
 
         public DataSection GetVariable (string name) {
 
-            // 值得注意的是，这里的 name 也可以是变量属性组
+            // 值得注意的是，这里的 name 也可以是匿名变量，但不能是变量属性组
+            
+            if(name.Trim().StartsWith("$[") && name.Trim().EndsWith("]")) {
+                name = name.Trim().Remove(0, 2).Remove(name.Length - 3, 1);
+                if (name.Trim().StartsWith("((") &&
+                    name.Trim().EndsWith("))")) {
+                    return ArrayData.Parse(name.Trim().Remove(0, 1).Remove(name.Length - 2, 1));
+                } else return DataSection.Parse(name);
+            }
 
             string find = name;
             switch (name) {
@@ -157,10 +165,47 @@ namespace Vision.Markup {
             SetVariable("numberofusers", ctx_users.User.Count().ToString());
         }
 
+        public void UpdateSystemVariables(PageContext ctx_pages, UserContext ctx_users) {
+            SetVariable("currentweek", (DateTime.Today.DayOfYear / 7).ToString());
+            SetVariable("currentmonth", DateTime.Today.Month.ToString());
+            SetVariable("currentday", DateTime.Now.Day.ToString());
+
+            // 值得注意的是，根据规定，星期日是一周的第一天，此后依次为周一，周二直到周六.
+            // 然而在欧洲和亚洲的大部分地区，特别是中国，人们习惯以周一为第一天。 因此，我们将此 Enum 改写，
+            // 令周日为第7天。
+
+            SetVariable("currentdayofweek", (((int)(DateTime.Today.DayOfWeek) == 0) ? 7 : (int)(DateTime.Today.DayOfWeek)).ToString());
+            SetVariable("currentyear", DateTime.Today.Year.ToString());
+            SetVariable("currenttime", DateTime.Now.ToString());
+            SetVariable("currentmonthname", DateTime.Today.ToString("MMMM", System.Globalization.CultureInfo.CurrentUICulture));
+            SetVariable("currentdayname", DateTime.Today.ToString("DDDD", System.Globalization.CultureInfo.CurrentUICulture));
+            SetVariable("datetime", DateTime.Now.ToString());
+            SetVariable("numberofpages", ctx_pages.Page.Count().ToString());
+            SetVariable("numberofusers", ctx_users.User.Count().ToString());
+        }
+
         // 隐式依赖于 ViewBag.Namespace
 
         public void Execute(Page page, Record record, User user, string namespaces, PageContext ctx_pages, UserContext ctx_users) {
             UpdateSystemVariables(page, record, user, namespaces, ctx_pages, ctx_users);
+            ExecuteProgrammables(this.Children, 1);
+            foreach (var item in this.Models) {
+                ExecuteProgrammables(item, 1);
+            }
+            ExecuteExplicitBreaks();
+            ExecuteCommands();
+
+            foreach (var item in this.Models) {
+                string s = "";
+                foreach (var child in item) {
+                    s = s + child.ToString();
+                }
+                StringifyModels.Add(s);
+            }
+        }
+
+        public void Execute(PageContext ctx_pages, UserContext ctx_users) {
+            UpdateSystemVariables(ctx_pages, ctx_users);
             ExecuteProgrammables(this.Children, 1);
             foreach (var item in this.Models) {
                 ExecuteProgrammables(item, 1);
@@ -254,6 +299,8 @@ namespace Vision.Markup {
                             }
                             break;
 
+                        case "if": goto case "ifbranch";
+
                         case "for":
 
                             // 语法： (for: (define: define_name) (from: ...) (to: ...) (step: ...) (content: ...))
@@ -313,11 +360,22 @@ namespace Vision.Markup {
                             //       在读取解析之后，直接将其元素删除，加到注册表中。
 
                             string name = (elem.Parameters["name"].First() as DataSection).Raw;
+                            string paramlist = (elem.Parameters["params"].First() as DataSection).Raw;
+                            List<string> param = new List<string>();
+                            if(!string.IsNullOrWhiteSpace(paramlist)) {
+                                param.AddRange(paramlist.Split(',').ToList());
+                            }
+
                             this.TemplateDefinitions.Add(name);
-                            if (Templating.TemplateRegistry.Registry.ContainsKey(name))
+                            if (Templating.TemplateRegistry.Registry.ContainsKey(name)) {
                                 this.CrashedTemplates.Add(name);
-                            else {
+                                Templating.TemplateRegistry.Registry[name] = elem.Parameters["content"];
+                                Templating.TemplateRegistry.Parameters[name] = param;
+                                sect.RemoveAt(count);
+                                total--; count--;
+                            } else {
                                 Templating.TemplateRegistry.Registry.Add(name, elem.Parameters["content"]);
+                                Templating.TemplateRegistry.Parameters.Add(name, param);
                                 sect.RemoveAt(count);
                                 total--; count--;
                             }
@@ -655,6 +713,91 @@ namespace Vision.Markup {
     </table> ";
                                     this.Models.Add(new List<Section>() { new TextData(_inf) });
                                     break;
+                                case "archive":
+                                    _inf = @"
+    <table class='box-Current plainlinks metadata ambox ambox-notice'>
+          <tbody>
+              <tr>
+                  <td class='mbox-image'>
+                    <div style = 'width: 52px; margin-left: 10px;'>
+                    <img src='/images/page-markers/archive.png' alt='' width='48' data-file-width='48' data-file-height='48' /></div>
+                </td>
+                <td class='mbox-text'>
+                    <div class='mbox-text-span'>" + rawmd + @"</div>
+                </td>
+            </tr>
+        </tbody>
+    </table> ";
+                                    this.Models.Add(new List<Section>() { new TextData(_inf) });
+                                    break;
+                                case "nutshell":
+                                    _inf = @"
+    <table class='box-Current plainlinks metadata ambox ambox-notice'>
+          <tbody>
+              <tr>
+                  <td class='mbox-image'>
+                    <div style = 'width: 52px; margin-left: 10px;'>
+                    <img src='/images/page-markers/nutshell.png' alt='' width='48' data-file-width='48' data-file-height='48' /></div>
+                </td>
+                <td class='mbox-text'>
+                    <div class='mbox-text-span'>" + rawmd + @"</div>
+                </td>
+            </tr>
+        </tbody>
+    </table> ";
+                                    this.Models.Add(new List<Section>() { new TextData(_inf) });
+                                    break;
+                                case "talk":
+                                    _inf = @"
+    <table class='box-Current plainlinks metadata ambox ambox-notice'>
+          <tbody>
+              <tr>
+                  <td class='mbox-image'>
+                    <div style = 'width: 52px; margin-left: 10px;'>
+                    <img src='/images/page-markers/talk.png' alt='' width='48' data-file-width='48' data-file-height='48' /></div>
+                </td>
+                <td class='mbox-text'>
+                    <div class='mbox-text-span'>" + rawmd + @"</div>
+                </td>
+            </tr>
+        </tbody>
+    </table> ";
+                                    this.Models.Add(new List<Section>() { new TextData(_inf) });
+                                    break;
+                                case "note":
+                                    _inf = @"
+    <table class='box-Current plainlinks metadata ambox ambox-notice'>
+          <tbody>
+              <tr>
+                  <td class='mbox-image'>
+                    <div style = 'width: 52px; margin-left: 10px;'>
+                    <img src='/images/page-markers/note.png' alt='' width='48' data-file-width='48' data-file-height='48' /></div>
+                </td>
+                <td class='mbox-text'>
+                    <div class='mbox-text-span'>" + rawmd + @"</div>
+                </td>
+            </tr>
+        </tbody>
+    </table> ";
+                                    this.Models.Add(new List<Section>() { new TextData(_inf) });
+                                    break;
+                                case "launch":
+                                    _inf = @"
+    <table class='box-Current plainlinks metadata ambox ambox-notice'>
+          <tbody>
+              <tr>
+                  <td class='mbox-image'>
+                    <div style = 'width: 52px; margin-left: 10px;'>
+                    <img src='/images/page-markers/launch.png' alt='' width='48' data-file-width='48' data-file-height='48' /></div>
+                </td>
+                <td class='mbox-text'>
+                    <div class='mbox-text-span'>" + rawmd + @"</div>
+                </td>
+            </tr>
+        </tbody>
+    </table> ";
+                                    this.Models.Add(new List<Section>() { new TextData(_inf) });
+                                    break;
                                 default:
                                     _inf = @"
     <table class='box-Current plainlinks metadata ambox ambox-notice'>
@@ -858,6 +1001,28 @@ namespace Vision.Markup {
 
         public void ExecuteCommands() {
 
+        }
+
+        public List<string> DetectCategories() {
+            List<string> cats = new List<string>();
+            foreach(var item in this.Children) {
+                if(item is ParagraphSection) {
+                    foreach (var parag in (item as ParagraphSection).Children) {
+                        if (parag is ElementSection) {
+                            var elem = parag as ElementSection;
+                            if (elem.Name.ToLower().Trim() == "category") {
+                                cats.Add(elem.Parameters["name"][0].Raw.Trim().ToLower());
+                            }
+                        }
+                    }
+                } else if(item is ElementSection) {
+                    var elem = item as ElementSection;
+                    if (elem.Name.ToLower().Trim() == "category") {
+                        cats.Add(elem.Parameters["name"][0].Raw.Trim().ToLower());
+                    }
+                }
+            }
+            return cats;
         }
 
         public List<Section> CopySections(List<Section> sections) {

@@ -1,4 +1,8 @@
-﻿using System;
+﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -6,10 +10,6 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Web;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 using Vision.Data;
 using Vision.Difference.Builder;
 using Vision.Markup;
@@ -42,6 +42,8 @@ namespace Vision.Controllers {
     ///  ViewData["IsPage"]       本页是否为内容页
     ///  ViewData["PageId"]       如果是内容页，获取Id
     ///  ViewData["PageTitle"]    获取页标题
+    ///  ViewData["IsCategory"]
+    ///  ViewData["CategoryId"]
     ///  
     /// </summary>
     public class HomeController : Controller {
@@ -71,18 +73,20 @@ namespace Vision.Controllers {
             _ctx_records = ctxRecord;
             _ctx_users = ctxUser;
 
+            // 加载系统预设的模板
+
+            MarkupParser.FromSource(Markup.Templating.TemplateDefinition.System, _ctx_pages, _ctx_users);
+
             ViewData["IsPage"] = false;
             ViewData["PageId"] = 0;
             ViewData["PageTitle"] = "";
-
-            ViewData["AuthenticatedUser"] = false;
-            ViewData["AuthenticatedAdministrator"] = false;
-            ViewData["AuthenticatedUserName"] = "";
         }
 
         #region Index
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
         public IActionResult Index() {
+            ViewData["IsCategory"] = false;
+            ViewData["CategoryId"] = 0;
             ViewData["IsPage"] = false;
             ViewData["PageId"] = 0;
             ViewData["PageTitle"] = "";
@@ -104,7 +108,7 @@ namespace Vision.Controllers {
 
             var pageItem = Utilities.Query.GetPageAndRecordByMd5(_ctx_pages, _ctx_records, Cryptography.MD5.Encrypt(id));
             if (!pageItem.Success)
-                return ManagedPageNotFoundError(Cryptography.MD5.Encrypt(id)+" ("+id+")");
+                return ManagedPageNotFoundError(Cryptography.MD5.Encrypt(id) + " (" + id + ")");
 
             ViewBag.Namespace = "";
 
@@ -134,19 +138,23 @@ namespace Vision.Controllers {
 
             pageItem.Record.Changes = DifferParser.GetChanges(pageItem.Record.History);
 
+            ViewData["IsCategory"] = false;
+            ViewData["CategoryId"] = 0;
             ViewData["IsPage"] = true;
             ViewData["PageId"] = pageItem.Result.Id;
             ViewData["PageTitle"] = pageItem.Result.Title;
             if (pageItem.Result.Title.StartsWith("Talk:"))
-                ViewData["PageTitle"] = pageItem.Result.Title.Remove(0,5);
+                ViewData["PageTitle"] = pageItem.Result.Title.Remove(0, 5);
 
             return View((pageItem.Result, pageItem.Record));
         }
         #endregion
 
         #region Privacy
-        [ResponseCache(Duration =3600, Location = ResponseCacheLocation.Any)]
+        [ResponseCache(Duration = 3600, Location = ResponseCacheLocation.Any)]
         public IActionResult Privacy() {
+            ViewData["IsCategory"] = false;
+            ViewData["CategoryId"] = 0;
             ViewData["IsPage"] = false;
             ViewData["PageId"] = 0;
             ViewData["PageTitle"] = "";
@@ -158,6 +166,8 @@ namespace Vision.Controllers {
         #region About
         [ResponseCache(Duration = 3600, Location = ResponseCacheLocation.Any)]
         public IActionResult About() {
+            ViewData["IsCategory"] = false;
+            ViewData["CategoryId"] = 0;
             ViewData["IsPage"] = false;
             ViewData["PageId"] = 0;
             ViewData["PageTitle"] = "";
@@ -174,6 +184,8 @@ namespace Vision.Controllers {
             var pageItem = Utilities.Query.GetPageAndRecordById(_ctx_pages, _ctx_records, (int)id);
             if (!pageItem.Success) return ManagedPageNotFoundError((int)id);
 
+            ViewData["IsCategory"] = false;
+            ViewData["CategoryId"] = 0;
             ViewData["IsPage"] = false;
             ViewData["PageId"] = 0;
             ViewData["PageTitle"] = "";
@@ -191,7 +203,7 @@ namespace Vision.Controllers {
                 Tag = formData["tags"]
             };
             string summary = formData["summary"];
-            summary = summary.Replace(" ", "&nbsp;").Replace("\n", "<br/>");
+            summary = summary.Replace("<", "&lt;").Replace(">", "&gt;").Replace(" ", "&nbsp;").Replace("\n", "<br/>");
             if (id != fdata.Id) return ManagedPageNotFoundError(id);
 
             var pageItem = Utilities.Query.GetPageAndRecordById(_ctx_pages, _ctx_records, id);
@@ -203,8 +215,11 @@ namespace Vision.Controllers {
             string diff = DifferParser.Generate(pageItem.Record.Body, fdata.History);
             int v = DifferParser.GetVersion(pageItem.Record.History) + 1;
 
-            string user = (string)ViewData["AuthenticatedUserName"];
-            if (string.IsNullOrWhiteSpace(user)) user = Request.HttpContext.Connection.LocalIpAddress.MapToIPv4().ToString();
+            string user = Request.HttpContext.Connection.LocalIpAddress.MapToIPv4().ToString();
+            try {
+                string temp = User.Claims.Where(claim => claim.Type == "display").ToList()[0].Value;
+                user = temp;
+            } catch { }
             string addHist = "\n:" + v + "\n" +
                 "@user " + user + "\n" +
                 "@datetime " + DateTime.Now.ToString() + "\n" +
@@ -212,7 +227,35 @@ namespace Vision.Controllers {
                 diff;
 
             pageItem.Record.History = pageItem.Record.History + addHist;
+
+            // 这里我们得到了当前版本的内容，我们还要生成历史一版本的内容，然后我们构建两个 VML 文档，
+            // 并对比两个文档的 Category 差异
+
             pageItem.Record.Body = DifferParser.Build(pageItem.Record.History);
+            string historyVersion = DifferParser.Build(pageItem.Record.History, v - 1);
+
+            MarkupDocument present = MarkupParser.NotExecuteFromSource(pageItem.Record.Body);
+            MarkupDocument past = MarkupParser.NotExecuteFromSource(historyVersion);
+            List<string> p_cats = present.DetectCategories();
+            List<string> h_cats = past.DetectCategories();
+
+            foreach (var item in p_cats) {
+                if (!h_cats.Contains(item)) {
+                    var cat = Utilities.Query.GetCategoryByName(_ctx_categories, item);
+                    cat.AddPage(pageItem.Result.Namespace + ":" + pageItem.Result.Title);
+                    _ctx_categories.Update(cat);
+                }
+            }
+
+            foreach (var item in h_cats) {
+                if (!p_cats.Contains(item)) {
+                    var cat = Utilities.Query.GetCategoryByName(_ctx_categories, item);
+                    cat.DeletePage(pageItem.Result.Namespace + ":" + pageItem.Result.Title);
+                    _ctx_categories.Update(cat);
+                }
+            }
+
+            await _ctx_categories.SaveChangesAsync();
             pageItem.Record.Category = fdata.Tag;
 
             if (true) {
@@ -223,12 +266,144 @@ namespace Vision.Controllers {
                     await _ctx_records.SaveChangesAsync();
                 } catch { }
             }
-            return Redirect("../Page/" + pageItem.Result.Namespace +":" + HttpUtility.UrlEncode(pageItem.Result.Title, Encoding.UTF8).Replace("+","%20"));
+
+            ViewData["IsCategory"] = false;
+            ViewData["CategoryId"] = 0;
+            return Redirect("../Page/" + pageItem.Result.Namespace + ":" + HttpUtility.UrlEncode(pageItem.Result.Title, Encoding.UTF8).Replace("+", "%20"));
+        }
+        #endregion
+
+        #region Edit Category
+        [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
+        public IActionResult EditCategory(int? id) {
+            if (id == null) return ManagedPageNoInputError();
+
+            var pageItem = Utilities.Query.GetCategoryById(_ctx_categories, (int)id);
+            if (pageItem == null) return ManagedPageNotFoundError((int)id);
+
+            pageItem.AliasBody = DifferParser.Build(pageItem.Alias);
+
+            ViewData["IsCategory"] = false;
+            ViewData["CategoryId"] = 0;
+            ViewData["IsPage"] = false;
+            ViewData["PageId"] = 0;
+            ViewData["PageTitle"] = "";
+            return View(pageItem);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
+        public async Task<IActionResult> EditCategory(int id, IFormCollection formData) {
+            var fdata = new EditFormData()
+            {
+                History = formData["alias"],
+                Id = Convert.ToInt32(formData["id"])
+            };
+            if (id != fdata.Id) return ManagedPageNotFoundError(id);
+
+            var pageItem = Utilities.Query.GetCategoryById(_ctx_categories, id);
+            if (pageItem == null) return ManagedPageNotFoundError(id);
+
+            if (string.IsNullOrEmpty(pageItem.AliasBody))
+                pageItem.AliasBody = DifferParser.Build(pageItem.Alias);
+            string diff = DifferParser.Generate(pageItem.AliasBody, fdata.History);
+            int v = DifferParser.GetVersion(pageItem.Alias) + 1;
+
+            string user = Request.HttpContext.Connection.LocalIpAddress.MapToIPv4().ToString();
+            try {
+                string temp = User.Claims.Where(claim => claim.Type == "display").ToList()[0].Value;
+                user = temp;
+            } catch { }
+            string addHist = "\n:" + v + "\n" +
+                "@user " + user + "\n" +
+                "@datetime " + DateTime.Now.ToString() + "\n" +
+                "@summary " + "\n" +
+                diff;
+
+            pageItem.Alias = pageItem.Alias + addHist;
+
+            // 这里我们得到了当前版本的内容，我们还要生成历史一版本的内容，然后我们构建两个 VML 文档，
+            // 并对比两个文档的 Category 差异
+
+            pageItem.AliasBody = DifferParser.Build(pageItem.Alias);
+            string historyVersion = DifferParser.Build(pageItem.Alias, v - 1);
+
+            MarkupDocument present = MarkupParser.NotExecuteFromSource(pageItem.AliasBody);
+            MarkupDocument past = MarkupParser.NotExecuteFromSource(historyVersion);
+            List<string> p_cats = present.DetectCategories();
+            List<string> h_cats = past.DetectCategories();
+
+            foreach (var item in p_cats) {
+                if (!h_cats.Contains(item)) {
+                    var cat = Utilities.Query.GetCategoryByName(_ctx_categories, item);
+                    cat.AddCategory(pageItem.Name);
+                    _ctx_categories.Update(cat);
+                }
+            }
+
+            foreach (var item in h_cats) {
+                if (!p_cats.Contains(item)) {
+                    var cat = Utilities.Query.GetCategoryByName(_ctx_categories, item);
+                    cat.DeleteCategory(pageItem.Name);
+                    _ctx_categories.Update(cat);
+                }
+            }
+
+            await _ctx_categories.SaveChangesAsync();
+
+            if (true) {
+                try {
+                    _ctx_categories.Update(pageItem);
+                    await _ctx_categories.SaveChangesAsync();
+                } catch { }
+            }
+
+            ViewData["IsCategory"] = false;
+            ViewData["CategoryId"] = 0;
+            return Redirect("../Portal/" + HttpUtility.UrlEncode(pageItem.Name, Encoding.UTF8).Replace("+", "%20") + "|1-1");
+        }
+        #endregion
+
+        #region Create Category
+        public IActionResult CreateCategory() {
+            ViewData["IsCategory"] = false;
+            ViewData["CategoryId"] = 0;
+            ViewData["IsPage"] = false;
+            ViewData["PageId"] = 0;
+            ViewData["PageTitle"] = "";
+
+            return View();
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
+        public async Task<IActionResult> CreateCategory([Bind("Id,Name,Pages,Alias")] Category cat) {
+            cat.Name = cat.Name.Trim();
+            cat.Pages = "";
+            cat.Alias = "";
+            var check = Utilities.Query.GetCategoryByName(_ctx_categories, cat.Name);
+            if(check != null) {
+                ManagedError err = new ManagedError()
+                {
+                    Title = "已存在相应的词条（或界面）",
+                    Details = "要创建的标题已存在，请导航至已存在的界面：" +
+                    "<a href='../Home/Category/" + check.Name + "|1-1'>" + check.Name + "</a>"
+                };
+                return View("Error", err);
+            }
+
+            _ctx_categories.Category.Add(cat);
+            await _ctx_categories.SaveChangesAsync();
+            return Redirect("/Home/Portal/" + HttpUtility.UrlEncode(cat.Name, Encoding.UTF8).Replace("+", "%20") + "|1-1");
         }
         #endregion
 
         #region Create
         public IActionResult Create() {
+            ViewData["IsCategory"] = false;
+            ViewData["CategoryId"] = 0;
             ViewData["IsPage"] = false;
             ViewData["PageId"] = 0;
             ViewData["PageTitle"] = "";
@@ -243,6 +418,7 @@ namespace Vision.Controllers {
 
             if (page.Namespace == "系统") page.Namespace = "System";
             if (page.Namespace == "特殊") page.Namespace = "Special";
+            if (page.Namespace == "分类") page.Namespace = "Category";
             if (page.Namespace == "不可见") page.Namespace = "Invisible";
 
             // 从输入的 Form Data 中获取文件名（和命名空间名）
@@ -306,7 +482,7 @@ namespace Vision.Controllers {
 
             _ctx_records.Add(recordTalk);
             _ctx_pages.Add(pageTalk);
-            
+
             await _ctx_records.SaveChangesAsync();
             await _ctx_pages.SaveChangesAsync();
 
@@ -322,6 +498,8 @@ namespace Vision.Controllers {
         #region Delete
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
         public async Task<IActionResult> Delete(int? id) {
+            ViewData["IsCategory"] = false;
+            ViewData["CategoryId"] = 0;
             ViewData["IsPage"] = false;
             ViewData["PageId"] = 0;
             ViewData["PageTitle"] = "";
@@ -345,8 +523,11 @@ namespace Vision.Controllers {
 
             int v = DifferParser.GetVersion(pageItem.Record.History) + 1;
 
-            string user = (string)ViewData["AuthenticatedUserName"];
-            if (string.IsNullOrWhiteSpace(user)) user = Request.HttpContext.Connection.LocalIpAddress.MapToIPv4().ToString();
+            string user = Request.HttpContext.Connection.LocalIpAddress.MapToIPv4().ToString();
+            try {
+                string temp = User.Claims.Where(claim => claim.Type == "display").ToList()[0].Value;
+                user = temp;
+            } catch { }
             string addHist = "\n:" + v + "\n" +
                 "@user " + user + "\n" +
                 "@datetime " + DateTime.Now.ToString() + "\n" +
@@ -358,7 +539,7 @@ namespace Vision.Controllers {
             string addHist2 = "\n:" + v + "\n" +
                 "@user " + user + "\n" +
                 "@datetime " + DateTime.Now.ToString() + "\n" +
-                "@summary " + "删除了当前界面的讨论界面"+
+                "@summary " + "删除了当前界面的讨论界面" +
                 "@delete";
             talkPage.Record.History = talkPage.Record.History + addHist2;
 
@@ -372,11 +553,124 @@ namespace Vision.Controllers {
 
         #region Debug
         public IActionResult Debug() {
+            ViewData["IsCategory"] = false;
+            ViewData["CategoryId"] = 0;
             ViewData["IsPage"] = false;
             ViewData["PageId"] = 0;
             ViewData["PageTitle"] = "";
 
             return View(_ctx_pages.Page);
+        }
+        #endregion
+
+        #region Portal
+        [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None)]
+        public IActionResult Portal(string? id) {
+            ViewData["IsCategory"] = true;
+            ViewData["IsPage"] = false;
+            ViewData["PageId"] = 0;
+            ViewData["PageTitle"] = "";
+
+            string pagestr = id.Split('|')[1].Trim();
+            int catpage = int.Parse(pagestr.Split('-')[0]);
+            int pagepage = int.Parse(pagestr.Split('-')[1]);
+            Category cat = Utilities.Query.GetCategoryByName(_ctx_categories, id.Split('|')[0].Trim());
+
+            ViewData["CategoryId"] = cat.Id;
+
+            List<string> lines = cat.Pages.Split('\n').ToList();
+            cat.PageList.Clear();
+            cat.SubCategoryList.Clear();
+            cat.CurrentCategory = catpage;
+            cat.CurrentPage = pagepage;
+
+            char lastpage = ' ';
+            char lastcat = ' ';
+
+            List<string> sorted = new List<string>();
+            foreach (var item in lines) {
+                if (!string.IsNullOrWhiteSpace(item)) {
+                    sorted.Add(item);
+                }
+            }
+
+            sorted.Sort((left, right) => {
+                string eva_left = "";
+                if(left.StartsWith("@page")) {
+                    eva_left = left.Remove(0, 5).Trim();
+                    if (eva_left.Contains(":")) eva_left = eva_left.Split(':')[1].Trim();
+                } else if (left.StartsWith("@cat")) {
+                    eva_left = left.Remove(0, 4).Trim();
+                    if (eva_left.Contains(":")) eva_left = eva_left.Split(':')[1].Trim();
+                }
+
+                string eva_right = "";
+                if (right.StartsWith("@page")) {
+                    eva_right = right.Remove(0, 5).Trim();
+                    if (eva_right.Contains(":")) eva_right = eva_right.Split(':')[1].Trim();
+                } else if (left.StartsWith("@cat")) {
+                    eva_right = right.Remove(0, 4).Trim();
+                    if (eva_right.Contains(":")) eva_right = eva_right.Split(':')[1].Trim();
+                }
+
+                eva_left = Vision.Utilities.Encoding.GetCapitalSpellCode(eva_left.Substring(0, 1)).ToUpper() + eva_left;
+                eva_right = Vision.Utilities.Encoding.GetCapitalSpellCode(eva_right.Substring(0, 1)).ToUpper() + eva_right;
+
+                return eva_right.CompareTo(eva_left);
+            });
+
+            foreach (var item in lines) {
+                if (item.StartsWith("@page")) {
+                    string t = item.Remove(0, 5).Trim();
+                    string first = Vision.Utilities.Encoding.GetCapitalSpellCode(t.Substring(0, 1)).ToUpper();
+                    if (t.Contains(":")) first = Vision.Utilities.Encoding.GetCapitalSpellCode(t.Split(':')[1].Substring(0, 1)).ToUpper();
+                    if (t[0] == lastpage) {
+                        cat.PageList.Add("<li><a href='/Home/Page/" + HttpUtility.UrlEncode(t, Encoding.UTF8).Replace("+", "%20") + "'>" + t + "</a></li>");
+                    } else {
+                        if (lastpage == ' ') {
+                            cat.PageList.Add("<h3>" + first + "</h3>");
+                            cat.PageList.Add("<li><a href='/Home/Page/" + HttpUtility.UrlEncode(t, Encoding.UTF8).Replace("+", "%20") + "'>" + t + "</a></li>");
+                            lastpage = first[0];
+                        } else {
+                            cat.PageList.Add("<h3>" + first + "</h3>");
+                            cat.PageList.Add("<li><a href='/Home/Page/" + HttpUtility.UrlEncode(t, Encoding.UTF8).Replace("+", "%20") + "'>" + t + "</a></li>");
+                            lastpage = first[0];
+                        }
+                    }
+                } else if (item.StartsWith("@cat")) {
+                    string t = item.Remove(0, 4).Trim();
+                    string first = Vision.Utilities.Encoding.GetCapitalSpellCode(t.Substring(0, 1)).ToUpper();
+                    if(t.Contains(":")) first = Vision.Utilities.Encoding.GetCapitalSpellCode(t.Split(':')[1].Substring(0, 1)).ToUpper();
+                    if (t[0] == lastcat) {
+                        cat.SubCategoryList.Add("<li><a href='/Home/Portal/" + HttpUtility.UrlEncode(t, Encoding.UTF8).Replace("+", "%20") + "|1-1'>" + t + "</a></li>");
+                    } else {
+                        if (lastcat == ' ') {
+                            cat.SubCategoryList.Add("<h3>" + first + "</h3>");
+                            cat.SubCategoryList.Add("<li><a href='/Home/Portal/" + HttpUtility.UrlEncode(t, Encoding.UTF8).Replace("+", "%20") + "'|1-1>" + t + "</a></li>");
+                            lastcat = first[0];
+                        } else {
+                            cat.SubCategoryList.Add("<h3>" + first + "</h3>");
+                            cat.SubCategoryList.Add("<li><a href='/Home/Portal/" + HttpUtility.UrlEncode(t, Encoding.UTF8).Replace("+", "%20") + "'|1-1>" + t + "</a></li>");
+                            lastcat = first[0];
+                        }
+                    }
+                }
+            }
+
+            if (string.IsNullOrEmpty(cat.AliasBody))
+                cat.AliasBody = DifferParser.Build(cat.Alias);
+            (string p, MarkupDocument doc) res = MarkupParser.FromSource(cat.AliasBody, _ctx_pages, _ctx_users);
+            cat.AliasHtml = res.p;
+
+            return View(cat);
+        }
+
+        public IActionResult CategoryPager(IFormCollection form) {
+            int id = int.Parse(form["id"]);
+            int catpage = int.Parse(form["catpage"]);
+            int pagepage = int.Parse(form["pagepage"]);
+            Category cat = Utilities.Query.GetCategoryById(_ctx_categories, id);
+            return Redirect("/Home/Portal/" + HttpUtility.UrlEncode(cat.Name, Encoding.UTF8).Replace("+", "%20") + "|" + catpage + "-" + pagepage);
         }
         #endregion
 
@@ -415,31 +709,41 @@ namespace Vision.Controllers {
             });
         }
 
-        public IActionResult ManagedPageNotFoundError(int id) => ManagedError(
-            "找不到请求的界面",
+        public IActionResult ManagedPageNotFoundError(int id) {
+            return ManagedError(
+"找不到请求的界面",
 
-            "你正在请求 Id = <code>"+id+"</code> 的界面数据，但是现有的数据库中不存在相对应的 Page 或 Record 对象。");
+"你正在请求 Id = <code>" + id + "</code> 的界面数据，但是现有的数据库中不存在相对应的 Page 或 Record 对象。");
+        }
 
-        public IActionResult ManagedPageNotFoundError(string id) => ManagedError(
-            "找不到请求的界面",
+        public IActionResult ManagedPageNotFoundError(string id) {
+            return ManagedError(
+"找不到请求的界面",
 
-            "你正在请求 Md5 = <code>" + id + "</code> 的界面数据，但是现有的数据库中不存在相对应的 Page 或 Record 对象。");
+"你正在请求 Md5 = <code>" + id + "</code> 的界面数据，但是现有的数据库中不存在相对应的 Page 或 Record 对象。");
+        }
 
-        public IActionResult IllegalNamespaceError(string id) => ManagedError(
-            "你不能创建含命名空间的界面，只能分配特定的命名空间",
+        public IActionResult IllegalNamespaceError(string id) {
+            return ManagedError(
+"你不能创建含命名空间的界面，只能分配特定的命名空间",
 
-            "你试图创建手动的讨论界面");
+"你试图创建手动的讨论界面");
+        }
 
-        public IActionResult ManagedPageNoInputError() => ManagedError(
-            "你使用了不合要求的 Page 查找语法",
+        public IActionResult ManagedPageNoInputError() {
+            return ManagedError(
+"你使用了不合要求的 Page 查找语法",
 
-            "你调用了 ~/Home/Page/ 页，但是我们要求你提供查找界面的 UTF8 格式 Title 值。\n " +
-            "正确的语法是 ~/Home/Page/(utf8 string Title)");
+"你调用了 ~/Home/Page/ 页，但是我们要求你提供查找界面的 UTF8 格式 Title 值。\n " +
+"正确的语法是 ~/Home/Page/(utf8 string Title)");
+        }
 
-        public IActionResult ManagedPageRegistryFailed() => ManagedError(
-            "已存储的对象没有找到",
+        public IActionResult ManagedPageRegistryFailed() {
+            return ManagedError(
+"已存储的对象没有找到",
 
-            "程序异常，之前存储的对象缺不能查询得到");
+"程序异常，之前存储的对象缺不能查询得到");
+        }
         #endregion
     }
 }

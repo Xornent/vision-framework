@@ -58,8 +58,14 @@ namespace Vision.Markup.Ast {
         // 它可以写作： @{ obj # A | obj_b, obj_c }
 
         public static DataSection GetOperationVariables(string operation, MarkupDocument doc) {
-            if (operation.Contains("|")) {
-                string[] paramSections = operation.Split('|');
+            operation = operation
+                .Replace("`#", "$<sharp>")
+                .Replace("`|", "$<pipe>")
+                .Replace("`,", "$<comma>")
+                .Replace("`:", "$<colon>");
+
+            if (operation.Contains(":")) {
+                string[] paramSections = operation.Split(':');
                 string[] props = paramSections[0].Split('#');
                 string[] param = paramSections[1].Split(',');
 
@@ -71,7 +77,12 @@ namespace Vision.Markup.Ast {
                 var type = typeof(DataSection);
 
                 if (!string.IsNullOrWhiteSpace(props[0])) {
-                    DataSection obj = doc.GetVariable(props[0].Trim());
+                    string varname = props[0].Trim()
+                        .Replace("$<sharp>", "#")
+                        .Replace("$<pipe>","|")
+                        .Replace("$<comma>", ",")
+                        .Replace("$<colon>", ":");
+                    DataSection obj = doc.GetVariable(varname);
                     par.Add(obj);
                     type = obj.GetType();
                     paramtypes.Add(obj.GetType());
@@ -198,6 +209,17 @@ namespace Vision.Markup.Ast {
 
         public static IntegerData length(TextData me) {
             return new IntegerData(me.Content.Length);
+        }
+
+        public static TextData splitat(TextData me, TextData splitter, IntegerData count, TextData defaults) {
+            try {
+                string[] spl = me.Content.Split(splitter.Content[0]);
+                return new TextData(spl[count.Value]);
+            } catch { return new TextData(defaults.Content); }
+        }
+
+        public static BooleanData isempty(TextData me) {
+            return new BooleanData(string.IsNullOrWhiteSpace(me.Content));
         }
     }
 }

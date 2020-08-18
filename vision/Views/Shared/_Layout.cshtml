@@ -55,12 +55,6 @@
                                                 </li>
                                                 <li class="nav-submenu-item">
                                                     <a href="/#" class="nav-submenu-link" data-type="columnitem" target="_self">
-                                                        <span class="nav-submenu-title">按学科和领域分类</span>
-                                                        <span class="nav-submenu-description">列举所有的分学科门户地址</span>
-                                                    </a>
-                                                </li>
-                                                <li class="nav-submenu-item">
-                                                    <a href="/#" class="nav-submenu-link" data-type="columnitem" target="_self">
                                                         <span class="nav-submenu-title">高级搜索</span>
                                                         <span class="nav-submenu-description">
                                                             使用条件和附加信息精确检索 Vision 条目，请 <br />
@@ -117,9 +111,43 @@
                                                             </span>
                                                         </a>
                                                     </li>
+                                                </ul>
+                                            </li>
+                                        </ul>
+                                    </li>
+                                } else if (Convert.ToBoolean(ViewData["IsCategory"])) {
+                                    <li class="nav-menu-item has-submenu">
+                                        <a class="nav-menu-label" data-type="item" aria-haspopup="true" aria-expanded="false"
+                                           role="button" onClick="nav_click(this)" id="nav.page">
+                                            页面
+                                        </a>
+                                        <ul class="nav-submenus" data-type="popup" role="group" data-gnav-scrollable="desktop" id="ul.page">
+                                            <li class="nav-submenu-wrapper">
+                                                <h5 class="nav-submenu-headline">你正在查看的页面</h5>
+                                                <ul class="nav-submenu" data-type="column">
                                                     <li class="nav-submenu-item">
-                                                        <a href="/#" class="nav-submenu-link" data-type="columnitem" target="_self">
-                                                            <span class="nav-submenu-title">随机条目</span>
+                                                        <a href="~/home/editcategory/@ViewData["CategoryId"]" class="nav-submenu-link" data-type="columnitem" target="_self">
+                                                            <span class="nav-submenu-title">查看（编辑）页面源代码</span>
+                                                            <span class="nav-submenu-description">
+                                                                查看和修改源代码，提交当前页面的新版本<br />
+                                                                请查看 基础知识：Vision Markup 语言
+                                                            </span>
+                                                        </a>
+                                                    </li>
+                                                    <li class="nav-submenu-item">
+                                                        <a onclick="window.print()" class="nav-submenu-link" data-type="columnitem" target="_self">
+                                                            <span class="nav-submenu-title">打印当前页</span>
+                                                            <span class="nav-submenu-description">
+                                                                打印 Vision 生成的文本文档
+                                                            </span>
+                                                        </a>
+                                                    </li>
+                                                    <li class="nav-submenu-item">
+                                                        <a href="~/home/page/@ViewData["PageTitle"]" class="nav-submenu-link" data-type="columnitem" target="_self" download="@ViewData["PageTitle"] - Vision.html">
+                                                            <span class="nav-submenu-title">下载离线 HTML 文档</span>
+                                                            <span class="nav-submenu-description">
+                                                                下载离线网页和排版以备无网络时使用
+                                                            </span>
                                                         </a>
                                                     </li>
                                                 </ul>
@@ -146,8 +174,8 @@
                                                     </a>
                                                 </li>
                                                 <li class="nav-submenu-item">
-                                                    <a href="/#" class="nav-submenu-link" data-type="columnitem" target="_self">
-                                                        <span class="nav-submenu-title">创建非词条门户页面</span>
+                                                    <a asp-controller="Home" asp-action="CreateCategory" class="nav-submenu-link" data-type="columnitem" target="_self">
+                                                        <span class="nav-submenu-title">创建分类门户页面</span>
                                                         <span class="nav-submenu-description">
                                                             新建门户界面，分类附加界面和其他自定义界面
                                                         </span>
@@ -164,6 +192,7 @@
                                                 </li>
                                             </ul>
                                         </li>
+                                        @if (false) {
                                         <li class="nav-submenu-wrapper">
                                             <h5 class="nav-submenu-headline">标准和词条质量</h5>
                                             <ul class="nav-submenu" data-type="column">
@@ -203,7 +232,7 @@
                                                 </li>
                                             </ul>
                                         </li>
-
+                                        }
                                     </ul>
                                 </li>
 
@@ -244,8 +273,8 @@
                                                 </li>
                                             </ul>
 
-                                            @if (Convert.ToBoolean(ViewData["AuthenticatedUser"])) {
-                                                <h5 class="nav-submenu-headline">@ViewData["AuthenticatedUserName"] 已登入</h5>
+                                            @if (User.Identity.IsAuthenticated) {
+                                                <h5 class="nav-submenu-headline">@User.Claims.Where(claim => claim.Type == "display").ToList()[0].Value 已登入</h5>
                                                 <ul>
                                                     <li class="nav-submenu-item">
                                                         <a href="~/Account/Profile" class="nav-submenu-link" data-type="columnitem" target="_self">
@@ -255,7 +284,7 @@
                                                             </span>
                                                         </a>
                                                     </li>
-                                                    @if (Convert.ToBoolean(ViewData["AuthenticatedAdministrator"])) {
+                                                    @if (@Convert.ToInt32(User.Claims.Where(claim => claim.Type == "level").ToList()[0].Value) >= 3) {
                                                         <li class="nav-submenu-item">
                                                             <a href="/#" class="nav-submenu-link" data-type="columnitem" target="_self">
                                                                 <span class="nav-submenu-title">界面审查</span>
@@ -275,6 +304,7 @@
                                             }
 
                                         </li>
+                                        @if (false) {
                                         <li class="nav-submenu-wrapper">
                                             <h5 class="nav-submenu-headline">基础知识</h5>
                                             <ul class="nav-submenu" data-type="column">
@@ -325,6 +355,7 @@
                                                 </li>
                                             </ul>
                                         </li>
+                                        }
                                     </ul>
                                 </li>
 
@@ -349,13 +380,13 @@
                                                     <a href="~/Home/Privacy" class="nav-submenu-link" data-type="columnitem" target="_self">
                                                         <span class="nav-submenu-title">隐私政策</span>
                                                         <span class="nav-submenu-description">
-                                                            查看 Vision 会如何采集和利用<br />用户的隐私信息
+                                                            查看 Vision 会如何采集和利用用户的隐私
                                                         </span>
                                                     </a>
                                                 </li>
                                                 <li class="nav-submenu-item">
                                                     <a href="/Home/Donate" class="nav-submenu-cta is-visible" data-type="columnitem" target="_self">
-                                                        <span class="nav-submenu-title">捐助项目 Vision</span>
+                                                        <span class="nav-submenu-title">捐助项目 Vision Framework</span>
                                                     </a>
                                                 </li>
                                             </ul>
@@ -364,7 +395,7 @@
                                 </li>
 
                             </ul>
-                        </div>
+</div>
                     </div>
 
                     <div>
@@ -402,28 +433,35 @@
 
     <div class="container">
         <div onclick="nav_clearall()" style="margin-top:100px" class="main">
-            <table class="table-main">
-                <tbody>
-                    <tr>
-                        <td class="page-content">
-                            <div id="content">
-                                @RenderBody()
-                            </div>
-                        </td>
-                        <td class="page-panel" valign="top">
-                            <div class="side">
-                                @RenderSection("side", false)
-                            </div>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
+            @if (Convert.ToBoolean(ViewData["Side"])) {
+                <table class="table-main">
+                    <tbody>
+                        <tr>
+                            <td class="page-content" valign="top">
+                                <div id="content">
+                                    @RenderBody()
+                                </div>
+                            </td>
+                            <td class="page-panel" valign="top">
+                                <div class="side">
+                                    @RenderSection("side", false)
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            } else {
+                <div id="content" style="margin-left:10%; width:80%;">
+                    @RenderBody()
+                </div>
+            }
+            <div class="placeholder"><p>&nbsp;</p></div>
         </div>
 
         <footer class="border-top footer text-muted">
             <div class="footer-container">
                 <center>
-                    <p style="color:#c6c6c6; margin-bottom:5px"><b>Copyleft</b> 2020 Xornent Organization : Vision 百科全书 | <a href="/Home/Privacy">隐私协议</a> | 公共网络备案编号：0</p>
+                    <p style="color:#c6c6c6; margin-bottom:1px"><b>Copyleft</b> 2020 Xornent Organization : Vision 百科全书 | <a href="/Home/Privacy">隐私协议</a> | 公共网络备案编号：0</p>
                     <p>本网站提供的所有文本内容签署在 <a>CC BY-SA 3.0 协议</a> 下，所有的公开代码段签署在 <a>GNU GPL 3.0 协议</a> 下</p>
                 </center>
             </div>

@@ -552,4 +552,13 @@ code {
 .side ul,
 .side ol {
     font-size: 0.8em;
+    margin-left: 15px;
+}
+
+.side{
+    margin-bottom: 50px;
+}
+
+.portal-list {
+    column-width: 27em;
 }
