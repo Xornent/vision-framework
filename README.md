@@ -13,11 +13,26 @@ a c-sharp based online collaborative writing system
 # snapshots
 
 * snapshot for v0.6.0
-!(v0.6.0)[github/images/vision-0.6.0-1.png]
+
+  ![v0.6.0](/github/images/vision-0.6.0-1.png)
 
 # release notes
 
-## 0.6.0
+## 0.7.0 (with VML v1.2.0)
+
+* `vml` annonymous variables
+* `vml` change in property-variable syntax from `@{[var] #func|params, ...}` to `@{[var] #func:params, ...}`
+* `vml` change selective branch name from `ifbranch` to `if`
+* `new` `editor` syntax highlignting
+* `new` `editor` template model auto-completion and suggestions
+* `new` table template
+* `new` category and navigation support
+* `change` remove side bar from some of the system pages
+* `change` auto-load system templates
+* `fix` the problem of wrong user account status
+* `fix` display unexpectancy in tables
+
+## 0.6.0 (with VML v1.1.47)
 
 * `new` side bars and history rendering (not complete)
 * `new` add basic user support, and by default displays the user's ip address
@@ -29,4 +44,4 @@ a c-sharp based online collaborative writing system
 * `fix` the memory of outer-cascade variable
 * `fix` evaluate text data variable, while output other types as raw.
 
-## 0.5.1
+## 0.5.1 (with VML v1.1.25)
