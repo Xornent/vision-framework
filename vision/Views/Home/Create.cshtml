@@ -1,42 +1,75 @@
 ﻿@model Vision.Models.Page
 
-@{
-    ViewData["Title"] = "新建词条";
-    ViewData["Side"] = false;
-}
+@{ ViewData["Title"] = "Create Page";
+    ViewData["Side"] = false; }
 
-<h1>新建条目</h1>
+<h1 class="spectrum-Heading spectrum-Heading--sizeXL spectrum-Heading--serif">Create Page</h1>
 
-<div class="row" style="margin-top:40px">
-    <div class="col-md-4">
-        <form asp-action="Create">
-            <div asp-validation-summary="ModelOnly" class="text-danger" style="display:none"></div>
-            <div class="form-group">
-                <label asp-for="Title" class="control-label"></label>
-                <input asp-for="Title" id="title" class="form-control" />
-                <span asp-validation-for="Title" class="text-danger"></span>
+<p class="spectrum-Body spectrum-Body--sizeM vision-ui-paragraph">
+    Pages are the basic display article in Vision Framework, building up in the form of a descriptive
+    macro language of Vision Markup. Create new pages from this portal, and you will be able to edit
+    and manage its content using Edit portal.
+</p>
+
+<form asp-action="Create" name="formCreate" class="spectrum-Form vision-form-emphasis">
+    <div class="spectrum-Form-item">
+        <label class="spectrum-FieldLabel spectrum-FieldLabel--sizeM spectrum-Form-itemLabel spectrum-FieldLabel--right">
+            Page Title
+        </label>
+        <div class="spectrum-Form-itemField">
+            <div class="spectrum-Textfield" style="width: 300px">
+                <input class="spectrum-Textfield-input" name="title" type="text" placeholder="The title of the page to create" />
             </div>
-            <div class="form-group">
-                <label asp-for="Namespace" class="control-label"></label>
-                <select asp-for="Namespace">
-                    <option></option>
-                    <option>系统</option>
-                    <option>特殊</option>
-                    <option>不可见</option>
-                </select>
-                <span asp-validation-for="Namespace" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <input type="submit" value="    创建词条    " class="btn btn-primary" />
-            </div>
-        </form>
+        </div>
     </div>
+    <div class="spectrum-Form-item">
+        <label class="spectrum-FieldLabel spectrum-FieldLabel--sizeM spectrum-Form-itemLabel spectrum-FieldLabel--right">
+            Namespace
+        </label>
+        <div class="spectrum-Form-itemField">
+            <div class="spectrum-Textfield" style="width: 300px">
+                <input class="spectrum-Textfield-input" name="namespace" type="text" placeholder="One of 'System', 'Special', 'Category', 'Invisible'" />
+            </div>
+        </div>
+    </div>
+    <div class="spectrum-Form-item">
+        <label> </label>
+        <div class="spectrum-Form-itemField">
+            <button onclick="formCreate.submit()" class="spectrum-Button spectrum-Button--primary spectrum-Button--sizeM" style="left: 185px;">
+                <svg class="spectrum-Icon spectrum-Icon--sizeM" focusable="false" aria-hidden="true" aria-label="Edit">
+                    <use xlink:href="#spectrum-icon-18-LinkPage"></use>
+                </svg>
+                <span class="spectrum-Button-label">New Page</span>
+            </button>
+        </div>
+    </div>
+</form>
+
+
+<h2 class="spectrum-Heading spectrum-Heading--sizeM spectrum-Heading--serif vision-ui-title">Further Reading</h2>
+<div class="vision-rightsided">
+    <p class="spectrum-Body spectrum-Body--sizeS">
+        If the page you want to create already exists, you will be redirected to an error page, providing access
+        to the page existed.
+    </p>
+    <p class="spectrum-Body spectrum-Body--sizeM">
+        <a class="spectrum-Link spectrum-Link--sizeM">Error: Page Existed</a>
+    </p>
 </div>
 
-<div>
-    <a asp-action="Index">回到首页</a>
-</div>
+<div class="vision-leftsided">
+    <p class="spectrum-Body spectrum-Body--sizeS">
+        Here are some tips on how to create an appropriate page. See the links below on the specification of naming,
+        merging, and namespace policies.
+    </p>
 
-@section Scripts {
-    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
-}
+    <p class="spectrum-Body spectrum-Body--sizeM">
+        <a class="spectrum-Link spectrum-Link--sizeM">Vision Framework: Naming Pages</a>
+    </p>
+    <p class="spectrum-Body spectrum-Body--sizeM">
+        <a class="spectrum-Link spectrum-Link--sizeM">Vision Framework: Namespace Policies</a>
+    </p>
+    <p class="spectrum-Body spectrum-Body--sizeM">
+        <a class="spectrum-Link spectrum-Link--sizeM">Vision Framework: Managing and Editing Pages</a>
+    </p>
+</div>

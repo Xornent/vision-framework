@@ -1,5 +1,99 @@
 ﻿body {
-    font-family: -apple-system, "PingFang SC", sans-serif;
+    font-family: Adobe Clean, HarmonyOS Sans SC, HarmonyOS Sans, Helvetica, Arial, sans-serif;
     line-height: 1.3em;
-    font-size: 0.9em;
+    margin:0;
+}
+
+.vision-article {
+    margin: 40px 50px;
+}
+
+.vision-form-emphasis {
+    margin: 24px;
+    padding: 24px 48px;
+    border-radius: 4px;
+    background: var(--spectrum-global-color-gray-100);
+}
+
+.vision-ui-paragraph {
+    margin: 10px 0px;
+}
+
+.vision-ui-title{
+    margin: 40px 0px 20px;
+}
+
+.vision-rightsided {
+    float: right;
+    width: 35%;
+}
+
+.vision-leftsided {
+    float: none;
+    width: 60%;
+}
+
+@media screen and (max-width: 960px) {
+    .vision-rightsided {
+        float: none;
+        width: 100%;
+        margin-bottom: 30px;
+    }
+
+    .vision-leftsided {
+        float: none;
+        width: 100%;
+    }
+}
+
+@media screen and (max-width: 890px) {
+    .vision-history-datetime {
+        display:none;
+    }
+}
+
+@media screen and (max-width: 1200px) and (min-width: 960px) {
+    .vision-history-datetime {
+        display: none;
+    }
+}
+
+.vision-history-datetime {
+    display: normal;
+}
+
+@media screen and (max-width: 720px) {
+    .vision-history-editor {
+        display: none;
+    }
+}
+
+@media screen and (max-width: 1035px) and (min-width: 960px) {
+    .vision-history-editor {
+        display: none;
+    }
+}
+
+.vision-history-editor {
+    display: normal;
+}
+
+.spectrum-Table-cell > .spectrum-ActionGroup.spectrum-ActionGroup--compact.spectrum-ActionGroup--quiet {
+    opacity: 0;
+    transition: .2s;
+}
+
+.spectrum-Table-cell:hover > .spectrum-ActionGroup.spectrum-ActionGroup--compact.spectrum-ActionGroup--quiet {
+    opacity: 1;
+    transition: .2s;
+}
+
+div.vision-status-disappear {
+    opacity: 1;
+    transition: .2s;
+}
+
+.spectrum-Table-cell:hover > .vision-status-disappear {
+    opacity: 0;
+    transition: .2s;
 }

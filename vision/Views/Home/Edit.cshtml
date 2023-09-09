@@ -1,26 +1,95 @@
 ﻿@model (Page _Page, Record _Record)
-@{
-    ViewData["Title"] = "编辑";
-    ViewData["Side"] = false;
-}
+@{ ViewData["Title"] = "Edit Page";
+    ViewData["Side"] = false; }
 
-<h1>编辑： @Html.Raw(Model._Page.Title.Split('#')[0])</h1>
+<h1 class="spectrum-Heading spectrum-Heading--sizeXL spectrum-Heading--serif">Edit Page: @Html.Raw(Model._Page.Title.Split('#')[0])</h1>
+
+<p class="spectrum-Body spectrum-Body--sizeM vision-ui-paragraph">
+    Edits changes the content of pages. It is the basis of collaborative writing. Commit the changes below
+    and summarize them. On how to make appropriate changes, see the Further Reading section below.
+</p>
+
 <div id="monaco-div" style="width: 100%;height: 450px; margin-top: 15px; margin-bottom:15px">
 </div>
 
-<form asp-action="Edit">
+<h2 class="spectrum-Heading spectrum-Heading--sizeM spectrum-Heading--serif vision-ui-title">Summerize and Commit Changes</h2>
+
+<form asp-action="Edit" name="formEdit" class="spectrum-Form vision-form-emphasis">
     <input style="display:none" name="id" id="id-id" value="@Model._Page.Id" />
     <input style="display:none" name="tags" id="id-tags" value="@Model._Record.Category" />
     <textarea style="display:none" name="history" id="id-hist">@Model._Record.Body</textarea>
-    <p><b>此页面的标识：</b><br /></p>
-    <div class="tagsinput-primary">
-        <input name="tagsinput" id="tagsinputval" class="tagsinput" data-role="tagsinput" value="" placeholder="输入后回车" />
+    <div class="spectrum-Form-item">
+        <label class="spectrum-FieldLabel spectrum-FieldLabel--sizeM spectrum-Form-itemLabel spectrum-FieldLabel--right">
+            Summary
+        </label>
+        <div class="spectrum-Form-itemField">
+            <div class="spectrum-Textfield spectrum-Textfield--multiline" style="width: 400px; height: 150px;">
+                <textarea class="spectrum-Textfield-input" name="summary" type="text" placeholder="Summarize your edit in a few sentences, this will be displayed in the history of the page for better understanding of your edit."></textarea>
+            </div>
+        </div>
     </div>
-    <p><b>编辑和更改摘要：</b><br></p>
-    <div class="form-group"><textarea style="margin: 0px 12px; height: 80px;" name="summary" id="id-summary" placeholder="用简短的几句话概括本次编辑的主要内容，填写编辑摘要（可选的）" class="form-control"></textarea></div>
-
-    <input type="submit" value="提交对文档的更改" style="width:180px; height:30px; margin-top:20px;" onclick="return loadup()" />
+    <div class="spectrum-Form-item">
+        <label> </label>
+        <div class="spectrum-Form-itemField">
+            <button onclick="if (loadup()) { formEdit.submit(); }" class="spectrum-Button spectrum-Button--primary spectrum-Button--sizeM" style="left: 275px;">
+                <svg class="spectrum-Icon spectrum-Icon--sizeM" focusable="false" aria-hidden="true" aria-label="Edit">
+                    <use xlink:href="#spectrum-icon-18-Send"></use>
+                </svg>
+                <span class="spectrum-Button-label">Commit Edit</span>
+            </button>
+        </div>
+    </div>
 </form>
+
+
+<h2 class="spectrum-Heading spectrum-Heading--sizeM spectrum-Heading--serif vision-ui-title">Further Reading</h2>
+<div class="vision-rightsided">
+    <p class="spectrum-Body spectrum-Body--sizeS">
+        Vision Framework uses a simplified version control system to manage the previous edits of a page.
+        Providing insights such as History View and Merge operations.
+    </p>
+    <p class="spectrum-Body spectrum-Body--sizeM">
+        <a class="spectrum-Link spectrum-Link--sizeM">Vision Framework: Edit Conflicts</a>
+    </p>
+    <p class="spectrum-Body spectrum-Body--sizeM">
+        <a class="spectrum-Link spectrum-Link--sizeM">Vision Framework: History</a>
+    </p>
+    <p class="spectrum-Body spectrum-Body--sizeM">
+        <a class="spectrum-Link spectrum-Link--sizeM">Vision Framework: Deletion</a>
+    </p>
+    <p class="spectrum-Body spectrum-Body--sizeM">
+        <a class="spectrum-Link spectrum-Link--sizeM">Vision Framework: Editions</a>
+    </p>
+</div>
+
+<div class="vision-leftsided">
+    <p class="spectrum-Body spectrum-Body--sizeS">
+        It's extraordinarily important to know what makes up an appropriate edit. This will better contribute
+        to the content and help people collaborate easier.
+    </p>
+
+    <p class="spectrum-Body spectrum-Body--sizeM">
+        <a class="spectrum-Link spectrum-Link--sizeM">Vision Framework: Edit Policies</a>
+    </p>
+
+    <div style="height: 20px"></div>
+    <p class="spectrum-Body spectrum-Body--sizeS">
+        The page document is recorded and managed in the form of Vision Markup Language(VML) source code. This is a
+        lite markup language with macro support. Learn the features and specification of VML helps better editing.
+    </p>
+
+    <p class="spectrum-Body spectrum-Body--sizeM">
+        <a class="spectrum-Link spectrum-Link--sizeM">Vision Framework: Vision Markup Language Specification</a>
+    </p>
+    <p class="spectrum-Body spectrum-Body--sizeM">
+        <a class="spectrum-Link spectrum-Link--sizeM">Vision Framework: Cheatsheet</a>
+    </p>
+    <p class="spectrum-Body spectrum-Body--sizeM">
+        <a class="spectrum-Link spectrum-Link--sizeM">Vision Framework: Sandbox</a>
+    </p>
+
+</div>
+
 
 <script src="~/editor/min/vs/loader.js"></script>
 <script>
@@ -181,22 +250,13 @@
         });
     });
 
-        var initialized = false;
+    var initialized = false;
 
     function loadup() {
         try {
             var ibd = document.getElementById("id-hist");
             var str = meditor.getValue();
             ibd.value = str;
-
-            var itg = document.getElementById("id-tags");
-            var tgs = $("#tagsinputval").val();
-            itg.value = tgs;
-
-            if (!initialized) {
-                $("#tagsinputval").tagsinput("add", "@Html.Raw(Model._Record.Category)");
-                initialized = true;
-            }
             return true;
         } catch (ex) { return false; }
     }

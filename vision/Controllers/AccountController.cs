@@ -62,6 +62,14 @@ namespace Vision.Controllers {
                     string loc = "Local IP Address: " + Request.HttpContext.Connection.LocalIpAddress.MapToIPv4().ToString() + ": " + Request.HttpContext.Connection.LocalPort;
                     string rem = "Remote IP Address: " + Request.HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString() + ": " + Request.HttpContext.Connection.RemotePort;
                     ViewData["Authenticated"] = loc + "<br/>" + rem + "<br/>" + "User: " + userName;
+
+                    ViewData["UserLocalIPPort"] = Request.HttpContext.Connection.LocalPort.ToString();
+                    ViewData["UserRemoteIPPort"] = Request.HttpContext.Connection.RemotePort.ToString();
+                    ViewData["UserLocalIPAddress"] = Request.HttpContext.Connection.LocalIpAddress.MapToIPv4().ToString();
+                    ViewData["UserRemoteIPAddress"] = Request.HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                    ViewData["UserLocalIPAddressV6"] = Request.HttpContext.Connection.LocalIpAddress.MapToIPv6().ToString();
+                    ViewData["UserRemoteIPAddressV6"] = Request.HttpContext.Connection.RemoteIpAddress.MapToIPv6().ToString();
+                    ViewData["UserName"] = userName;
                     return View();
                 }
             }

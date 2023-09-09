@@ -1,22 +1,60 @@
-﻿@{
-    ViewData["Title"] = "登入";
-    ViewData["Side"] = false;
-}
+﻿@{ ViewData["Title"] = "Sign in";
+                ViewData["Side"] = false; }
 
-<h1>登入</h1>
+<h1 class="spectrum-Heading spectrum-Heading--sizeXL spectrum-Heading--serif">Sign in to Vision Framework</h1>
 
-<form asp-action="Login">
-    <table>
-        <tbody>
-            <tr>
-                <td><label class="control-label">用户名</label></td>
-                <td><input value="" name="username" placeholder="注册用户名" /></td>
-            </tr>
-            <tr>
-                <td><label class="control-label">密码</label></td>
-                <td><input value="" name="password" placeholder="输入大小写敏感的密码" /></td>
-            </tr>
-        </tbody>
-    </table>
-    <input type="submit" value="    登入    " />
+<p class="spectrum-Body spectrum-Body--sizeM vision-ui-paragraph">
+By signing in, your edits will be recorded under your account. You will have more previleges and accessibilities 
+to change the contents which are protected over annonymous editors. Updating your account accesibility levels
+to an administrator will allow you to manage pages and keep them in good condition.</p>
+
+<p class="spectrum-Body spectrum-Body--sizeM vision-ui-paragraph">
+All the records of editing, deleting and discussions will be stored together with your user account, it will
+be more convenient for you to view and manage your editions. Your account are also responsible for your versions.
+</p>
+
+<form asp-action="Login" name="formLogin" class="spectrum-Form vision-form-emphasis">
+    <div class="spectrum-Form-item">
+        <label class="spectrum-FieldLabel spectrum-FieldLabel--sizeM spectrum-Form-itemLabel spectrum-FieldLabel--right">
+            Username
+        </label>
+        <div class="spectrum-Form-itemField">
+            <div class="spectrum-Textfield">
+                <input class="spectrum-Textfield-input" name="username" type="text" placeholder="Enter your username" />
+            </div>
+        </div>
+    </div>
+    <div class="spectrum-Form-item">
+        <label class="spectrum-FieldLabel spectrum-FieldLabel--sizeM spectrum-Form-itemLabel spectrum-FieldLabel--right">
+            Password
+        </label>
+        <div class="spectrum-Form-itemField">
+            <div class="spectrum-Textfield">
+                <input class="spectrum-Textfield-input" name="password" type="password" placeholder="Enter your password" />
+            </div>
+        </div>
+    </div>
+    <div class="spectrum-Form-item">
+        <label> </label>
+        <div class="spectrum-Form-itemField">
+            <button onclick="formLogin.submit()" class="spectrum-Button spectrum-Button--primary spectrum-Button--sizeM" style="left: 95px;">
+                <svg class="spectrum-Icon spectrum-Icon--sizeM" focusable="false" aria-hidden="true" aria-label="Edit">
+                    <use xlink:href="#spectrum-icon-18-Login"></use>
+                </svg>
+                <span class="spectrum-Button-label">Sign in</span>
+            </button>
+        </div>
+    </div>
 </form>
+
+<h2 class="spectrum-Heading spectrum-Heading--sizeM spectrum-Heading--serif vision-ui-title">Further Reading</h2>
+
+<p class="spectrum-Body spectrum-Body--sizeM">
+    <a class="spectrum-Link spectrum-Link--sizeM">Vision Framework: Privacy Policy</a>
+</p>
+<p class="spectrum-Body spectrum-Body--sizeM">
+    <a class="spectrum-Link spectrum-Link--sizeM">Vision Framework: Users</a>
+</p>
+<p class="spectrum-Body spectrum-Body--sizeM">
+    <a class="spectrum-Link spectrum-Link--sizeM">Vision Framework: Users Accessibility Levels</a>
+</p>

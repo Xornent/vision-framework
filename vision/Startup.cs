@@ -21,6 +21,7 @@ namespace Vision {
 
     public class Startup {
         public static string WebRoot = "";
+        public static string SQLConnection = "";
 
         public Startup(IConfiguration configuration) {
             WebRoot = (string)configuration.GetValue(typeof(String), "URLS");
@@ -34,7 +35,7 @@ namespace Vision {
 
         public void ConfigureServices(IServiceCollection services) {
             services.AddControllersWithViews();
-
+            SQLConnection = Configuration.GetConnectionString("Vision");
             services.AddDbContext<PageContext>(options =>
             options.UseSqlServer(Configuration.GetConnectionString("Vision")));
             services.AddDbContext<RecordContext>(options =>
@@ -50,9 +51,6 @@ namespace Vision {
                     option.LoginPath = "/Account/Login";
                     option.Cookie.Name = "user-identity";
                     option.Cookie.HttpOnly = true;
-
-                    // 注意，我们默认采用 HTTPS 协议，设置本项表示验证用户的 Cookie 在
-                    // 非 HTTPS 下不会发送，如果要适配 HTTP 协议，修改未 SameAsRequest.
 
                     option.Cookie.SecurePolicy = Microsoft.AspNetCore.Http.CookieSecurePolicy.Always;
                 });

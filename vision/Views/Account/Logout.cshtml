@@ -1,12 +1,66 @@
 ﻿@{
-    ViewData["Title"] = "登出";
+    ViewData["Title"] = "User Portal";
     ViewData["Side"] = false;
 }
 
-<h1>登出当前用户</h1>
-<h3>你确定要退出当前用户吗</h3>
-<h4><code>@(new Microsoft.AspNetCore.Html.HtmlString((string)ViewData["Authenticated"]))</code></h4>
+<h1 class="spectrum-Heading spectrum-Heading--sizeXL spectrum-Heading--serif">User: @((string)ViewData["UserName"])</h1>
+<h2 class="spectrum-Heading spectrum-Heading--sizeM spectrum-Heading--serif vision-ui-title">Network Connections</h2>
+<table class="spectrum-Table">
+    <colgroup>
+        <col style="width:15%">
+        <col style="width:30%">
+        <col style="width:30%">
+        <col style="width:25%">
+    </colgroup>
+    <thead class="spectrum-Table-head">
+        <tr>
+            <th class="spectrum-Table-headCell is-sortable is-sorted-desc" aria-sort="descending" tabindex="0">
+                Address Item
+                <svg class="spectrum-Icon spectrum-UIIcon-ArrowDown100 spectrum-Table-sortedIcon" focusable="false" aria-hidden="true">
+                    <use xlink:href="#spectrum-css-icon-Arrow100" />
+                </svg>
+            </th>
+            <th class="spectrum-Table-headCell is-sortable" aria-sort="none">
+                IP Address (IPv4)
+                <svg class="spectrum-Icon spectrum-UIIcon-ArrowDown100 spectrum-Table-sortedIcon" focusable="false" aria-hidden="true">
+                    <use xlink:href="#spectrum-css-icon-Arrow100" />
+                </svg>
+            </th>
+            <th class="spectrum-Table-headCell is-sortable" aria-sort="none">
+                IP Address (IPv6)
+                <svg class="spectrum-Icon spectrum-UIIcon-ArrowDown100 spectrum-Table-sortedIcon" focusable="false" aria-hidden="true">
+                    <use xlink:href="#spectrum-css-icon-Arrow100" />
+                </svg>
+            </th>
+            <th class="spectrum-Table-headCell">Portal</th>
+        </tr>
+    </thead>
+    <tbody class="spectrum-Table-body">
+        <tr class="spectrum-Table-row">
+            <td class="spectrum-Table-cell" tabindex="0">Local</td>
+            <td class="spectrum-Table-cell" tabindex="0"> @((string)ViewData["UserLocalIPAddress"])</td>
+            <td class="spectrum-Table-cell" tabindex="0"> @((string)ViewData["UserLocalIPAddressV6"])</td>
+            <td class="spectrum-Table-cell" tabindex="0"> @((string)ViewData["UserLocalIPPort"])</td>
+        </tr>
+        <tr class="spectrum-Table-row">
+            <td class="spectrum-Table-cell" tabindex="0">Remote</td>
+            <td class="spectrum-Table-cell" tabindex="0"> @((string)ViewData["UserRemoteIPAddress"])</td>
+            <td class="spectrum-Table-cell" tabindex="0"> @((string)ViewData["UserRemoteIPAddressV6"])</td>
+            <td class="spectrum-Table-cell" tabindex="0"> @((string)ViewData["UserRemoteIPPort"])</td>
+        </tr>
+    </tbody>
+</table>
 
-<form asp-action="Logout">
-    <input type="submit" value="确认退出登录"/>
+<h2 class="spectrum-Heading spectrum-Heading--sizeM spectrum-Heading--serif vision-ui-title">Log out</h2>
+<form asp-action="Logout" class="spectrum-Form" name="formLogout">
+    <div class="spectrum-Form-item">
+        <div class="spectrum-Form-itemField">
+            <button onclick="formLogout.submit()" class="spectrum-Button spectrum-Button--primary spectrum-Button--sizeM">
+                <svg class="spectrum-Icon spectrum-Icon--sizeM" focusable="false" aria-hidden="true" aria-label="Edit">
+                    <use xlink:href="#spectrum-icon-18-Login"></use>
+                </svg>
+                <span class="spectrum-Button-label">Log out</span>
+            </button>
+        </div>
+    </div>
 </form>

@@ -1,5 +1,7 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using System;
@@ -60,7 +62,8 @@ namespace Vision.Controllers {
 
         private readonly Markup.MarkupParser MarkupParser = new Markup.MarkupParser();
         private readonly Difference.DifferParser DifferParser = new Difference.DifferParser();
-
+        public static int PageIndexMaximum = 0;
+        public static int CategoryIndexMaximum = 0;
         public HomeController(ILogger<HomeController> logger,
             PageContext ctxPages,
             RecordContext ctxRecord,
@@ -72,6 +75,16 @@ namespace Vision.Controllers {
             _ctx_categories = ctxCategory;
             _ctx_records = ctxRecord;
             _ctx_users = ctxUser;
+
+            SqlConnection conn = new SqlConnection(Startup.SQLConnection);
+            conn.Open();
+            SqlCommand cmd = new SqlCommand("select max(Id) from dbo.Page", conn);
+            int i = Convert.ToInt32(cmd.ExecuteScalar());
+            PageIndexMaximum = i / 2 + 1;
+
+            SqlCommand catc = new SqlCommand("select max(Id) from dbo.Category", conn);
+            int cat = Convert.ToInt32(catc.ExecuteScalar());
+            CategoryIndexMaximum = cat + 1;
 
             // 加载系统预设的模板
 
@@ -143,10 +156,52 @@ namespace Vision.Controllers {
             ViewData["IsPage"] = true;
             ViewData["PageId"] = pageItem.Result.Id;
             ViewData["PageTitle"] = pageItem.Result.Title;
+
+            if (pageItem.Result.Namespace == "Talk") {
+                if (Utilities.Query.GetPageAndRecordByMd5(_ctx_pages, _ctx_records, Cryptography.MD5.Encrypt("System:" + pageItem.Result.Title)).Success)
+                    ViewData["PageNamespace"] = "System";
+                else if (Utilities.Query.GetPageAndRecordByMd5(_ctx_pages, _ctx_records, Cryptography.MD5.Encrypt("Special:" + pageItem.Result.Title)).Success)
+                    ViewData["PageNamespace"] = "Special";
+                else if (Utilities.Query.GetPageAndRecordByMd5(_ctx_pages, _ctx_records, Cryptography.MD5.Encrypt("Invisible:" + pageItem.Result.Title)).Success)
+                    ViewData["PageNamespace"] = "Invisible";
+                else ViewData["PageNamespace"] = "Page";
+            } else ViewData["PageNamespace"] = pageItem.Result.Namespace;
+
             if (pageItem.Result.Title.StartsWith("Talk:"))
                 ViewData["PageTitle"] = pageItem.Result.Title.Remove(0, 5);
 
             return View((pageItem.Result, pageItem.Record));
+        }
+        #endregion
+
+        #region History
+        [ResponseCache(Duration = 300, Location = ResponseCacheLocation.Any)]
+        public async Task<IActionResult> History(string? id)
+        {
+            if (id == null) return ManagedPageNoInputError();
+
+            string[] pager = id.Split('|');
+            id = pager[0];
+            int page = Convert.ToInt32(pager[1]);
+
+            var pageItem = Utilities.Query.GetPageAndRecordByMd5(_ctx_pages, _ctx_records, Cryptography.MD5.Encrypt(id));
+            if (!pageItem.Success)
+                return ManagedPageNotFoundError(Cryptography.MD5.Encrypt(id) + " (" + id + ")");
+
+            ViewBag.Namespace = "";
+
+            pageItem.Record.Changes = DifferParser.GetChanges(pageItem.Record.History);
+
+            ViewData["IsCategory"] = false;
+            ViewData["CategoryId"] = 0;
+            ViewData["IsPage"] = false;
+            ViewData["PageId"] = pageItem.Result.Id;
+            ViewData["PageTitle"] = pageItem.Result.Title;
+            ViewData["PageNamespace"] = pageItem.Result.Title;
+            if (pageItem.Result.Title.StartsWith("Talk:"))
+                ViewData["PageTitle"] = pageItem.Result.Title.Remove(0, 5);
+
+            return View((pageItem.Result, pageItem.Record,  page));
         }
         #endregion
 
@@ -200,7 +255,7 @@ namespace Vision.Controllers {
             {
                 History = formData["history"],
                 Id = Convert.ToInt32(formData["id"]),
-                Tag = formData["tags"]
+                Tag = ""
             };
             string summary = formData["summary"];
             summary = summary.Replace("<", "&lt;").Replace(">", "&gt;").Replace(" ", "&nbsp;").Replace("\n", "<br/>");
@@ -220,6 +275,15 @@ namespace Vision.Controllers {
                 string temp = User.Claims.Where(claim => claim.Type == "display").ToList()[0].Value;
                 user = temp;
             } catch { }
+
+            if (HttpContext.User.Identity.IsAuthenticated) {
+                await HttpContext.AuthenticateAsync();
+                var userName = HttpContext.User.Claims.First().Value;
+                if (!string.IsNullOrEmpty(userName)) {
+                    user = userName;
+                }
+            }
+
             string addHist = "\n:" + v + "\n" +
                 "@user " + user + "\n" +
                 "@datetime " + DateTime.Now.ToString() + "\n" +
@@ -310,6 +374,9 @@ namespace Vision.Controllers {
             string diff = DifferParser.Generate(pageItem.AliasBody, fdata.History);
             int v = DifferParser.GetVersion(pageItem.Alias) + 1;
 
+            string summary = formData["summary"];
+            summary = summary.Replace("<", "&lt;").Replace(">", "&gt;").Replace(" ", "&nbsp;").Replace("\n", "<br/>");
+
             string user = Request.HttpContext.Connection.LocalIpAddress.MapToIPv4().ToString();
             try {
                 string temp = User.Claims.Where(claim => claim.Type == "display").ToList()[0].Value;
@@ -318,7 +385,7 @@ namespace Vision.Controllers {
             string addHist = "\n:" + v + "\n" +
                 "@user " + user + "\n" +
                 "@datetime " + DateTime.Now.ToString() + "\n" +
-                "@summary " + "\n" +
+                "@summary " + summary + "\n" +
                 diff;
 
             pageItem.Alias = pageItem.Alias + addHist;
@@ -379,17 +446,20 @@ namespace Vision.Controllers {
         [HttpPost]
         [ValidateAntiForgeryToken]
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
-        public async Task<IActionResult> CreateCategory([Bind("Id,Name,Pages,Alias")] Category cat) {
-            cat.Name = cat.Name.Trim();
+        public async Task<IActionResult> CreateCategory(IFormCollection form) {
+            Category cat = new Category();
+            cat.Name = form["title"].ToString().Trim();
+            cat.Id = CategoryIndexMaximum;
+            CategoryIndexMaximum++;
             cat.Pages = "";
             cat.Alias = "";
             var check = Utilities.Query.GetCategoryByName(_ctx_categories, cat.Name);
             if(check != null) {
                 ManagedError err = new ManagedError()
                 {
-                    Title = "已存在相应的词条（或界面）",
-                    Details = "要创建的标题已存在，请导航至已存在的界面：" +
-                    "<a href='../Home/Category/" + check.Name + "|1-1'>" + check.Name + "</a>"
+                    Title = "Category Existed",
+                    Details = "The category to create already exists, here is a link to it:" +
+                    "<a class='spectrum-Link spectrum-Link--sizeM' href='../Home/Portal/" + check.Name + "|1-1'>" + check.Name + "</a>"
                 };
                 return View("Error", err);
             }
@@ -414,12 +484,16 @@ namespace Vision.Controllers {
         [HttpPost]
         [ValidateAntiForgeryToken]
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
-        public async Task<IActionResult> Create([Bind("Hash,Id,Title,Namespace,Level")] Page page) {
-
-            if (page.Namespace == "系统") page.Namespace = "System";
-            if (page.Namespace == "特殊") page.Namespace = "Special";
-            if (page.Namespace == "分类") page.Namespace = "Category";
-            if (page.Namespace == "不可见") page.Namespace = "Invisible";
+        public async Task<IActionResult> Create(IFormCollection form) {
+            Models.Page page = new Page();
+            page.Namespace = form["namespace"];
+            if (form["namespace"] == "系统") page.Namespace = "System";
+            if (form["namespace"] == "特殊") page.Namespace = "Special";
+            if (form["namespace"] == "分类") page.Namespace = "Category";
+            if (form["namespace"] == "不可见") page.Namespace = "Invisible";
+            page.Title = form["title"];
+            page.Id = PageIndexMaximum * 2;
+            PageIndexMaximum++;
 
             // 从输入的 Form Data 中获取文件名（和命名空间名）
             // 这两个名称是直接存储在 Page.Title 中的。（详见文档注释说明）
@@ -433,9 +507,9 @@ namespace Vision.Controllers {
             if (check.Success) {
                 ManagedError err = new ManagedError()
                 {
-                    Title = "已存在相应的词条（或界面）",
-                    Details = "要创建的标题（和对应的 MD5 摘要）已存在，请导航至已存在的界面：" +
-                    "<a href='../Home/Page/" + check.Result.Title + "'>" + check.Result.Title + "</a>"
+                    Title = "Page Existed",
+                    Details = "The page you are about to create already exists, Here is a link to that page:" +
+                    "<a class='spectrum-Link spectrum-Link--sizeM' href='../Home/Page/" + check.Result.Namespace + ":" + check.Result.Title + "'>" +  check.Result.Title + "</a>"
                 };
                 return View("Error", err);
             }
@@ -466,6 +540,7 @@ namespace Vision.Controllers {
 
             Models.Page pageTalk = new Page()
             {
+                Id = page.Id + 1,
                 Title = page.Title,
                 Level = 0,
                 Namespace = "Talk",
@@ -474,6 +549,7 @@ namespace Vision.Controllers {
 
             Record recordTalk = new Record()
             {
+                Id = pageTalk.Id,
                 Body = "",
                 Category = "",
                 History = "",

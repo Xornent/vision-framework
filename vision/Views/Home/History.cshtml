@@ -1,0 +1,82 @@
+﻿@model (Page _Page, Record _Record, int Pager)
+@{ ViewData["Title"] = "History " + Model._Page.Title.Split('#')[0];
+    ViewData["Side"] = false; }
+
+<h1 class="spectrum-Heading spectrum-Heading--sizeXL spectrum-Heading--serif">Version History: @Model._Page.Title</h1>
+<h2 class="spectrum-Heading spectrum-Heading--sizeM spectrum-Heading--serif vision-ui-title">Detailed Version Map</h2>
+<table class="spectrum-Table" style="width: 100%">
+    <colgroup>
+        <col style="width:70px">
+        <col>
+        <col style="width:120px" class="vision-history-editor">
+        <col style="width:200px" class="vision-history-datetime">
+        <col style="width:137px">
+    </colgroup>
+    <thead class="spectrum-Table-head">
+        <tr>
+            <th class="spectrum-Table-headCell is-sortable is-sorted-desc" aria-sort="descending" tabindex="0">
+                Id
+                <svg class="spectrum-Icon spectrum-UIIcon-ArrowDown100 spectrum-Table-sortedIcon" focusable="false" aria-hidden="true">
+                    <use xlink:href="#spectrum-css-icon-Arrow100" />
+                </svg>
+            </th>
+            <th class="spectrum-Table-headCell is-sortable" aria-sort="none">
+                Summary
+                <svg class="spectrum-Icon spectrum-UIIcon-ArrowDown100 spectrum-Table-sortedIcon" focusable="false" aria-hidden="true">
+                    <use xlink:href="#spectrum-css-icon-Arrow100" />
+                </svg>
+            </th>
+            <th class="spectrum-Table-headCell is-sortable vision-history-editor" aria-sort="none">
+                Editor
+                <svg class="spectrum-Icon spectrum-UIIcon-ArrowDown100 spectrum-Table-sortedIcon" focusable="false" aria-hidden="true">
+                    <use xlink:href="#spectrum-css-icon-Arrow100" />
+                </svg>
+            </th>
+            <th class="spectrum-Table-headCell is-sortable vision-history-datetime" aria-sort="none">
+                Publish Date
+                <svg class="spectrum-Icon spectrum-UIIcon-ArrowDown100 spectrum-Table-sortedIcon" focusable="false" aria-hidden="true">
+                    <use xlink:href="#spectrum-css-icon-Arrow100" />
+                </svg>
+            </th>
+            <th class="spectrum-Table-headCell">Status</th>
+        </tr>
+    </thead>
+    <tbody class="spectrum-Table-body">
+        @for (int i = Model._Record.Changes.Count - 1; i >= 0; i--) {
+            var currentChange = Model._Record.Changes[i];
+        <tr class="spectrum-Table-row">
+            <td class="spectrum-Table-cell spectrum-Table-cell--divider" tabindex="0">
+                <p class="spectrum-Body spectrum-Body--sizeM"><strong>@i</strong></p>
+            </td>
+            <td class="spectrum-Table-cell" style="word-break: break-all;" tabindex="0"><p class="spectrum-Body spectrum-Body--sizeS">@(new Microsoft.AspNetCore.Html.HtmlString(@currentChange.Summary))</p></td>
+            <td class="spectrum-Table-cell vision-history-editor" tabindex="0">@currentChange.User</td>
+            <td class="spectrum-Table-cell vision-history-datetime" tabindex="0">@Model._Record.Changes[i].Post.ToString()</td>
+            <td class="spectrum-Table-cell" tabindex="0">
+
+                <div style="position:absolute" class="spectrum-ActionGroup spectrum-ActionGroup--compact spectrum-ActionGroup--quiet">
+                    <button class="spectrum-ActionButton spectrum-ActionButton--sizeM spectrum-ActionButton--quiet spectrum-ActionGroup-item">
+                        <svg class="spectrum-Icon spectrum-Icon--sizeM" focusable="false" aria-hidden="true" aria-label="Edit">
+                            <use xlink:href="#spectrum-icon-18-Edit" />
+                        </svg>
+                    </button>
+                    <button class="spectrum-ActionButton spectrum-ActionButton--sizeM spectrum-ActionButton--quiet spectrum-ActionGroup-item">
+                        <svg class="spectrum-Icon spectrum-Icon--sizeM" focusable="false" aria-hidden="true" aria-label="Copy">
+                            <use xlink:href="#spectrum-icon-18-Copy" />
+                        </svg>
+                    </button>
+                    <button class="spectrum-ActionButton spectrum-ActionButton--sizeM spectrum-ActionButton--quiet spectrum-ActionGroup-item is-selected">
+                        <svg class="spectrum-Icon spectrum-Icon--sizeM" focusable="false" aria-hidden="true" aria-label="Delete">
+                            <use xlink:href="#spectrum-icon-18-Delete" />
+                        </svg>
+                    </button>
+                </div>
+
+                @if (i == Model._Record.Changes.Count - 1) {
+            <div class="spectrum-StatusLight spectrum-StatusLight--sizeM spectrum-StatusLight--celery vision-status-disappear">Current</div> } else if (i == 0) {
+            <div class="spectrum-StatusLight spectrum-StatusLight--sizeM spectrum-StatusLight--indigo vision-status-disappear">Created</div> } else if (currentChange.Type == 1) {
+            <div class="spectrum-StatusLight spectrum-StatusLight--sizeM is-disabled vision-status-disappear">Updated</div>}
+
+            </td>
+        </tr>}
+    </tbody>
+</table>

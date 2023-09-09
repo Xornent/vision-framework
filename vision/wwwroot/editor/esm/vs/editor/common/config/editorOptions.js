@@ -1254,7 +1254,7 @@ var EditorLayoutProvider = /** @class */ (function () {
     return EditorLayoutProvider;
 }());
 export { EditorLayoutProvider };
-var DEFAULT_WINDOWS_FONT_FAMILY = 'Consolas, \'Courier New\', monospace';
+var DEFAULT_WINDOWS_FONT_FAMILY = 'SF Mono, Cascadia Code, Consolas, \'Courier New\', HarmonyOS Sans SC, PingFang SC, monospace';
 var DEFAULT_MAC_FONT_FAMILY = 'Menlo, Monaco, \'Courier New\', monospace';
 var DEFAULT_LINUX_FONT_FAMILY = '\'Droid Sans Mono\', \'monospace\', monospace, \'Droid Sans Fallback\'';
 /**

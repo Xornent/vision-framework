@@ -1,30 +1,95 @@
-﻿@{
-    ViewData["Title"] = "注册用户";
-    ViewData["Side"] = false;
-}
+﻿@{ ViewData["Title"] = "Sign up";
+    ViewData["Side"] = false; }
 
-<h1>注册新用户</h1>
+<h1 class="spectrum-Heading spectrum-Heading--sizeXL spectrum-Heading--serif">Sign up</h1>
 
-<form asp-action="Register">
-    <table>
-        <tbody>
-            <tr>
-                <td><label class="control-label">用户名</label></td>
-                <td><input value="" name="username" placeholder="注册用户名" /></td>
-            </tr>
-            <tr>
-                <td><label class="control-label">密码</label></td>
-                <td><input value="" name="password" placeholder="输入大小写敏感的密码" /></td>
-            </tr>
-            <tr>
-                <td><label class="control-label">联系方式</label></td>
-                <td><input value="" name="contact" placeholder="可用的邮箱地址" /></td>
-            </tr>
-            <tr>
-                <td><label class="control-label">等级</label></td>
-                <td><input value="" name="level" placeholder="" /></td>
-            </tr>
-        </tbody>
-    </table>
-    <input type="submit" value="    注册    " />
+<p class="spectrum-Body spectrum-Body--sizeM vision-ui-paragraph">
+    You can create an user account. You will have more previleges and accessibilities
+    to change the contents which are protected over annonymous editors. Updating your account accesibility levels
+    to an administrator will allow you to manage pages and keep them in good condition.
+</p>
+
+<p class="spectrum-Body spectrum-Body--sizeM vision-ui-paragraph">
+    All the records of editing, deleting and discussions will be stored together with your user account, it will
+    be more convenient for you to view and manage your editions. Your account are also responsible for your versions.
+</p>
+
+<form asp-action="Register" name="formRegister" class="spectrum-Form vision-form-emphasis">
+    <div class="spectrum-Form-item">
+        <label class="spectrum-FieldLabel spectrum-FieldLabel--sizeM spectrum-Form-itemLabel spectrum-FieldLabel--right">
+            Username
+        </label>
+        <div class="spectrum-Form-itemField">
+            <div class="spectrum-Textfield">
+                <input class="spectrum-Textfield-input" name="username" type="text" placeholder="Enter your username" />
+            </div>
+        </div>
+    </div>
+    <div class="spectrum-Form-item">
+        <label class="spectrum-FieldLabel spectrum-FieldLabel--sizeM spectrum-Form-itemLabel spectrum-FieldLabel--right">
+            Password
+        </label>
+        <div class="spectrum-Form-itemField">
+            <div class="spectrum-Textfield">
+                <input class="spectrum-Textfield-input" name="password" type="password" placeholder="Enter your password" />
+            </div>
+        </div>
+    </div>
+    <div class="spectrum-Form-item">
+        <label class="spectrum-FieldLabel spectrum-FieldLabel--sizeM spectrum-Form-itemLabel spectrum-FieldLabel--right">
+            E-mail
+        </label>
+        <div class="spectrum-Form-itemField">
+            <div class="spectrum-Textfield">
+                <input class="spectrum-Textfield-input" name="contect" type="text" placeholder="Enter a valid e-mail address" />
+            </div>
+        </div>
+    </div>
+
+    <div class="spectrum-Form-item">
+        <label class="spectrum-FieldLabel spectrum-FieldLabel--sizeM spectrum-Form-itemLabel spectrum-FieldLabel--right">
+            Accessibility Level
+        </label>
+        <div class="spectrum-Form-itemField">
+            <div class="spectrum-Textfield">
+                <input class="spectrum-Textfield-input" name="level" type="text" placeholder="User accessibility level" />
+            </div>
+        </div>
+    </div>
+
+    <div class="spectrum-Form-item">
+        <label> </label>
+        <div class="spectrum-Form-itemField">
+            <button href="~/account/login" class="spectrum-Button spectrum-Button--primary spectrum-Button--sizeM" style="left: 36px;">
+                <svg class="spectrum-Icon spectrum-Icon--sizeM" focusable="false" aria-hidden="true" aria-label="Edit">
+                    <use xlink:href="#spectrum-icon-18-Login"></use>
+                </svg>
+                <span class="spectrum-Button-label">I have an account</span>
+            </button>
+        </div>
+    </div>
+
+    <div class="spectrum-Form-item">
+        <label> </label>
+        <div class="spectrum-Form-itemField">
+            <button onclick="formRegister.submit()" class="spectrum-Button spectrum-Button--primary spectrum-Button--sizeM" style="left: 95px;">
+                <svg class="spectrum-Icon spectrum-Icon--sizeM" focusable="false" aria-hidden="true" aria-label="Edit">
+                    <use xlink:href="#spectrum-icon-18-UsersAdd"></use>
+                </svg>
+                <span class="spectrum-Button-label">Sign up</span>
+            </button>
+        </div>
+    </div>
 </form>
+
+<h2 class="spectrum-Heading spectrum-Heading--sizeM spectrum-Heading--serif vision-ui-title">Further Reading</h2>
+
+<p class="spectrum-Body spectrum-Body--sizeM">
+    <a class="spectrum-Link spectrum-Link--sizeM">Vision Framework: Privacy Policy</a>
+</p>
+<p class="spectrum-Body spectrum-Body--sizeM">
+    <a class="spectrum-Link spectrum-Link--sizeM">Vision Framework: Users</a>
+</p>
+<p class="spectrum-Body spectrum-Body--sizeM">
+    <a class="spectrum-Link spectrum-Link--sizeM">Vision Framework: Users Accessibility Levels</a>
+</p>

@@ -1,34 +1,65 @@
 ﻿@model Vision.Models.Category
 
-@{
-    ViewData["Title"] = "新建类别";
-    ViewData["Side"] = false;
-}
+@{ ViewData["Title"] = "Create Category";
+                ViewData["Side"] = false; }
 
-<h1>新建类别</h1>
+<h1 class="spectrum-Heading spectrum-Heading--sizeXL spectrum-Heading--serif">Create Category</h1>
 
-<div class="row" style="margin-top:40px">
-    <div class="col-md-4">
-        <form asp-action="CreateCategory">
-            <div asp-validation-summary="ModelOnly" class="text-danger" style="display:none"></div>
-            <div class="form-group">
-                <label asp-for="Name" class="control-label"></label>
-                <input asp-for="Name" id="title" class="form-control" />
-                <span asp-validation-for="Name" class="text-danger"></span>
+<p class="spectrum-Body spectrum-Body--sizeM vision-ui-paragraph">
+    Categories are markers of a page indicating the class of pages. Each page can be marked as several
+    categories. And you can access the pages and sub-categories that belongs to a certain category in 
+    its portal. A logical management of pages. 
+</p>
+
+<form asp-action="CreateCategory" name="formCreate" class="spectrum-Form vision-form-emphasis">
+    <div class="spectrum-Form-item">
+        <label class="spectrum-FieldLabel spectrum-FieldLabel--sizeM spectrum-Form-itemLabel spectrum-FieldLabel--right">
+            Category Title
+        </label>
+        <div class="spectrum-Form-itemField">
+            <div class="spectrum-Textfield" style="width: 300px">
+                <input class="spectrum-Textfield-input" name="title" type="text" placeholder="The title of the page to create" />
             </div>
-            <input asp-for="Pages" id="" class="form-control" style="display:none;" />
-            <input asp-for="Alias" id="" class="form-control" style="display:none;" />
-            <div class="form-group">
-                <input type="submit" value="    创建类别    " class="btn btn-primary" />
-            </div>
-        </form>
+        </div>
     </div>
+    <div class="spectrum-Form-item">
+        <label> </label>
+        <div class="spectrum-Form-itemField">
+            <button onclick="formCreate.submit()" class="spectrum-Button spectrum-Button--primary spectrum-Button--sizeM" style="left: 162px;">
+                <svg class="spectrum-Icon spectrum-Icon--sizeM" focusable="false" aria-hidden="true" aria-label="Edit">
+                    <use xlink:href="#spectrum-icon-18-LinkPage"></use>
+                </svg>
+                <span class="spectrum-Button-label">New Category</span>
+            </button>
+        </div>
+    </div>
+</form>
+
+
+<h2 class="spectrum-Heading spectrum-Heading--sizeM spectrum-Heading--serif vision-ui-title">Further Reading</h2>
+<div class="vision-rightsided">
+    <p class="spectrum-Body spectrum-Body--sizeS">
+        If the category you want to create already exists, you will be redirected to an error page, providing access
+        to the category existed.
+    </p>
+    <p class="spectrum-Body spectrum-Body--sizeM">
+        <a class="spectrum-Link spectrum-Link--sizeM">Error: Category Existed</a>
+    </p>
 </div>
 
-<div>
-    <a asp-action="Index">回到首页</a>
-</div>
+<div class="vision-leftsided">
+    <p class="spectrum-Body spectrum-Body--sizeS">
+        Here are some tips on how to create an appropriate category. See the links below on the specification
+        and operation of categories
+    </p>
 
-@section Scripts {
-    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
-}
+    <p class="spectrum-Body spectrum-Body--sizeM">
+        <a class="spectrum-Link spectrum-Link--sizeM">Vision Framework: Categories</a>
+    </p>
+    <p class="spectrum-Body spectrum-Body--sizeM">
+        <a class="spectrum-Link spectrum-Link--sizeM">Vision Framework: Category Shortcuts</a>
+    </p>
+    <p class="spectrum-Body spectrum-Body--sizeM">
+        <a class="spectrum-Link spectrum-Link--sizeM">Vision Framework: Managing and Editing Categories</a>
+    </p>
+</div>

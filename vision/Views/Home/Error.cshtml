@@ -1,9 +1,9 @@
 ﻿@model ManagedError
 @{
-    ViewData["Title"] = "错误";
+    ViewData["Title"] = "Error";
     ViewData["Side"] = false;
 }
 
-<h1>@Model.Title</h1>
+<h1 class="spectrum-Heading spectrum-Heading--sizeXL spectrum-Heading--serif">@Model.Title</h1>
 
-<p>@Html.Raw(Model.Details)</p>
+<p class="spectrum-Body spectrum-Body--sizeM vision-ui-paragraph">@Html.Raw(Model.Details)</p>

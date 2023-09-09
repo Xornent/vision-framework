@@ -443,7 +443,7 @@ a {
     }
 
 code {
-    font-family:Consolas;
+    font-family: SF Mono, Cascadia Code, Consolas, 'Courier New', HarmonyOS Sans SC, PingFang SC, monospace;
 }
 
 form table tr {
@@ -538,7 +538,7 @@ table {
     }
 
 code {
-    font-family: consolas, SimSun, monospace !important;
+    font-family: SF Mono, Cascadia Code, Consolas, 'Courier New', HarmonyOS Sans SC, PingFang SC, monospace !important;
 }
 
 .side li {

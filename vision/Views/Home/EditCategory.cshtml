@@ -1,19 +1,93 @@
 ﻿@model Category
-@{
-    ViewData["Title"] = "编辑分类门户";
-    ViewData["Side"] = false;
-}
+@{ ViewData["Title"] = "编辑分类门户";
+                ViewData["Side"] = false; }
 
-<h1>编辑分类门户：@Model.Name</h1>
+<h1 class="spectrum-Heading spectrum-Heading--sizeXL spectrum-Heading--serif">Edit Category: @Model.Name</h1>
+
+<p class="spectrum-Body spectrum-Body--sizeM vision-ui-paragraph">
+    Edits changes the content of categories. Categories has an editable description page used to display
+    customized contents and descriptions.
+</p>
 
 <div id="monaco-div" style="width: 100%;height: 450px; margin-top: 15px; margin-bottom:15px">
 </div>
 
-<form asp-action="EditCategory">
-    <input style="display:none" name="id" id="id-id" value="@Model.Id"/>
+<h2 class="spectrum-Heading spectrum-Heading--sizeM spectrum-Heading--serif vision-ui-title">Summerize and Commit Changes</h2>
+
+<form asp-action="EditCategory" name="formEdit" class="spectrum-Form vision-form-emphasis">
+    <input style="display:none" name="id" id="id-id" value="@Model.Id" />
     <textarea style="display:none" name="alias" id="id-alias">@Model.AliasBody</textarea>
-    <input type="submit" value="提交对页面的更改" style="width:180px; height:30px; margin-top:20px;" onclick="return loadup()" />
+    <div class="spectrum-Form-item">
+        <label class="spectrum-FieldLabel spectrum-FieldLabel--sizeM spectrum-Form-itemLabel spectrum-FieldLabel--right">
+            Summary
+        </label>
+        <div class="spectrum-Form-itemField">
+            <div class="spectrum-Textfield spectrum-Textfield--multiline" style="width: 400px; height: 150px;">
+                <textarea class="spectrum-Textfield-input" name="summary" type="text" placeholder="Summarize your edit in a few sentences, this will be displayed in the history of the page for better understanding of your edit."></textarea>
+            </div>
+        </div>
+    </div>
+    <div class="spectrum-Form-item">
+        <label> </label>
+        <div class="spectrum-Form-itemField">
+            <button onclick="if (loadup()) { formEdit.submit(); }" class="spectrum-Button spectrum-Button--primary spectrum-Button--sizeM" style="left: 275px;">
+                <svg class="spectrum-Icon spectrum-Icon--sizeM" focusable="false" aria-hidden="true" aria-label="Edit">
+                    <use xlink:href="#spectrum-icon-18-Send"></use>
+                </svg>
+                <span class="spectrum-Button-label">Commit Edit</span>
+            </button>
+        </div>
+    </div>
 </form>
+
+
+<h2 class="spectrum-Heading spectrum-Heading--sizeM spectrum-Heading--serif vision-ui-title">Further Reading</h2>
+<div class="vision-rightsided">
+    <p class="spectrum-Body spectrum-Body--sizeS">
+        Vision Framework uses a simplified version control system to manage the previous edits of a page.
+        Providing insights such as History View and Merge operations.
+    </p>
+    <p class="spectrum-Body spectrum-Body--sizeM">
+        <a class="spectrum-Link spectrum-Link--sizeM">Vision Framework: Edit Conflicts</a>
+    </p>
+    <p class="spectrum-Body spectrum-Body--sizeM">
+        <a class="spectrum-Link spectrum-Link--sizeM">Vision Framework: History</a>
+    </p>
+    <p class="spectrum-Body spectrum-Body--sizeM">
+        <a class="spectrum-Link spectrum-Link--sizeM">Vision Framework: Deletion</a>
+    </p>
+    <p class="spectrum-Body spectrum-Body--sizeM">
+        <a class="spectrum-Link spectrum-Link--sizeM">Vision Framework: Editions</a>
+    </p>
+</div>
+
+<div class="vision-leftsided">
+    <p class="spectrum-Body spectrum-Body--sizeS">
+        It's extraordinarily important to know what makes up an appropriate edit. This will better contribute
+        to the content and help people collaborate easier.
+    </p>
+
+    <p class="spectrum-Body spectrum-Body--sizeM">
+        <a class="spectrum-Link spectrum-Link--sizeM">Vision Framework: Edit Policies</a>
+    </p>
+
+    <div style="height: 20px"></div>
+    <p class="spectrum-Body spectrum-Body--sizeS">
+        The page document is recorded and managed in the form of Vision Markup Language(VML) source code. This is a
+        lite markup language with macro support. Learn the features and specification of VML helps better editing.
+    </p>
+
+    <p class="spectrum-Body spectrum-Body--sizeM">
+        <a class="spectrum-Link spectrum-Link--sizeM">Vision Framework: Vision Markup Language Specification</a>
+    </p>
+    <p class="spectrum-Body spectrum-Body--sizeM">
+        <a class="spectrum-Link spectrum-Link--sizeM">Vision Framework: Cheatsheet</a>
+    </p>
+    <p class="spectrum-Body spectrum-Body--sizeM">
+        <a class="spectrum-Link spectrum-Link--sizeM">Vision Framework: Sandbox</a>
+    </p>
+
+</div>
 
 <script src="~/editor/min/vs/loader.js"></script>
 <script>
